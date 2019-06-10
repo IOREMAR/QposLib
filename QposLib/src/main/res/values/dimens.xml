@@ -1,0 +1,45 @@
+<resources>
+    <dimen name="margen_mediano">16dp</dimen>
+    <dimen name="padding_contenido_cardview">10dp</dimen>
+    <dimen name="corners_button">20dp</dimen>
+    <dimen name="padding_et_especial">5dp</dimen>
+    <dimen name= "margin_exit_fragment">12dp</dimen>
+    <dimen name="curvatura_standar">20dp</dimen>
+
+    <!--Tamaños alerta con progreso-->
+    <dimen name="gen_dimen_txt_14">14sp</dimen>
+    <dimen name="gen_dimen_txt_12">12sp</dimen>
+    <dimen name="gen_dimen_txt_16">16sp</dimen>
+    <dimen name="gen_dimen_txt_18">18sp</dimen>
+    <dimen name="gen_dimen_txt_20">20sp</dimen>
+    <dimen name="gen_dimen_txt_24">24sp</dimen>
+    <dimen name="gen_dimen_txt_28">28sp</dimen>
+    <dimen name="text_size_normal">14sp</dimen>
+    <dimen name="text_size_menu_tabs">16sp</dimen>
+    <dimen name="tam_txt_pequeno">10sp</dimen>
+    <dimen name="ancho_dialogo">360dp</dimen>
+
+    <!-- Tamaños para menu de configuraciones -->
+    <dimen name="gen_dimen_cardview_altura">141dp</dimen>
+    <dimen name="gen_dimen_img_cardview_altura">80dp</dimen>
+    <dimen name="gen_dimen_img_cardview_ancho">90dp</dimen>
+
+    <!--Dimens Login -->
+    <dimen name= "tam_logo">150dp</dimen>
+    <dimen name="altura_boton">30dp</dimen>
+    <!--Dimens Registro-->
+    <dimen name="ancho_campos_registro">-1px</dimen>
+    <!-- Escaneo carrito-->
+    <dimen name="altura_items_carro_adapter">30dp</dimen>
+    <!-- Modal-->
+    <!-- StatusBar-->
+    <dimen name="status_bar_altura">25dp</dimen>
+    <!--Cierre de Turno-->
+    <!--Tamaños letra-->
+    <dimen name="tamano_texto_standar">14dp</dimen>
+
+    <!--Botones -->
+
+    <dimen name="titulo_parametro_dialogo_confirmacion">16dp</dimen>
+    <dimen name="valor_parametro_dialogo_confirmacion">14dp</dimen>
+</resources>

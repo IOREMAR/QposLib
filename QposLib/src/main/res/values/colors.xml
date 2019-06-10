@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#00A1E1</color>
+    <color name="colorPrimaryDark">#0073AF</color>
+    <color name="colorAccent">#62D2FF</color>
+
+    <color name="colorWhite">#ffffff</color>
+    <color name="colorGreyLigth">#C1C6C8</color>
+    <color name="colorGreyDark">#8d9192</color>
+    <color name="colorGrey">#E0E0E0</color>
+    <color name="coloproducttext">#46606a</color>
+    <color name="colorbackgroudnproyect">#fbfbfb</color>
+    <color name="colorGreyFormulario">#5B6770</color>
+    <color name="colorGreySolid">#37474F</color>
+    <color name="colorSaldoAzul">#00a0e0</color>
+
+    <color name="colorGreyDarkModal">#5B6770</color>
+
+    <color name="colorNegative">#d32f2f</color>
+    <color name="colorPositive">#86d32f</color>
+    <color name="colorAzulLetra">#00A3E0</color>
+    <color name="colorGrisTiempo">#5B6770</color>
+    <color name="colorPreciosEscaneo">#393939</color>
+    <color name="colorErrorYellow">#f1e612</color>
+    <color name="colorSoftRed">#CC0033</color>
+    <color name="colorStrongRed">#711611</color>
+    <color name="colorDefaultButtonBackGround">#EE234D</color>
+    <color name="colorDefaultButtonBackGroundPress">#710714</color>
+</resources>

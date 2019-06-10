@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="EditTextDatosUsuarios">
+        <attr name="hint" format="string"/>
+        <attr name="icono" format="reference"/>
+        <attr name="opcional" format="boolean"/>
+        <attr name="centrado" format="boolean"/>
+        <attr name="habilitado" format="boolean"/>
+        <attr name="tamanos_hint" format="integer"/>
+        <attr name="tamanos_letra_sp" format="integer"/>
+        <attr name="android:inputType"/>
+        <attr name="android:gravity"/>
+    </declare-styleable>
+    <declare-styleable name="SpinnerConTitulo">
+        <attr name="cabecera" format="string"/>
+    </declare-styleable>
+    <declare-styleable name="EditTextEspecial">
+        <attr name="hint_s" format="string"/>
+        <attr name="icono_s" format="reference"/>
+        <attr name="ime_s" format="string"/>
+    </declare-styleable>
+    <declare-styleable name="BotonClickUnico">
+        <attr name="delay" format="integer"/>
+    </declare-styleable>
+    <declare-styleable name="IndicadorEstado">
+        <attr name="number_states" format="integer" />
+        <attr name="slider_title" format="string" />
+    </declare-styleable>
+
+
+
+
+
+
+    <attr name="primary" format="reference" />
+    <attr name="primaryDark" format="reference" />
+    <attr name="accent" format="reference" />
+    <attr name="defaultButtonBackGround" format="reference" />
+    <attr name="defaultButtonBackGroundPress" format="reference" />
+
+    <attr name="wifi_gift" format="reference" />
+
+    <attr name="totem_not_found_gif" format="reference" />
+    <attr name="totem_connecting_gif" format="reference" />
+    <attr name="conectar_totem_gif" format="reference" />
+
+    <attr name="fullcarga_flat" format="reference" />
+    <attr name="fullcarga" format="reference" />
+    <attr name="ic_logo" format="reference" />
+    <attr name="menu_button_background" format="reference" />
+
+
+</resources>

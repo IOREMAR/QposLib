@@ -1,0 +1,156 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="android:windowBackground">@drawable/abg_azul_degradado</item>
+        <item name="android:windowContentTransitions">true</item>
+    </style>
+
+    <style name="AppThemeBlue" parent="AppTheme">
+
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+        <item name="primary">@color/colorPrimary</item>
+        <item name="primaryDark">@color/colorPrimaryDark</item>
+        <item name="accent">@color/colorAccent</item>
+        <item name="defaultButtonBackGround">@color/colorPrimaryDark</item>
+        <item name="defaultButtonBackGroundPress">@color/colorPrimary</item>
+
+        <item name="drawerArrowStyle">@style/DrawerHamburgerStyle</item>
+
+    </style>
+
+    <style name="DrawerHamburgerStyle" parent="@style/Widget.AppCompat.DrawerArrowToggle">
+        <item name="spinBars">true</item>
+        <item name="color">@android:color/white</item>
+    </style>
+
+    <style name="AppThemeRed" parent="AppTheme">
+
+        <item name="colorPrimary">@color/colorSoftRed</item>
+        <item name="colorPrimaryDark">@color/colorStrongRed</item>
+        <item name="colorAccent">@color/colorDefaultButtonBackGround</item>
+
+        <item name="android:statusBarColor">@color/colorSoftRed</item>
+        <item name="primary">@color/colorSoftRed</item>
+        <item name="primaryDark">@color/colorStrongRed</item>
+        <item name="accent">@color/colorDefaultButtonBackGround</item>
+        <item name="defaultButtonBackGround">@color/colorDefaultButtonBackGround</item>
+        <item name="defaultButtonBackGroundPress">@color/colorDefaultButtonBackGroundPress</item>
+
+
+    </style>
+
+    <style name="PickerStyle">
+        <item name="android:editTextColor">@color/colorAzulLetra</item>
+    </style>
+
+
+    <!-- Cold screen fix ends-->
+
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+
+    <style name="EditTextInput" parent="@android:style/Widget.EditText">
+        <item name="android:textSize">@dimen/text_size_normal</item>
+        <item name="android:textColor">@color/colorGrey</item>
+        <item name="android:backgroundTint" tools:ignore="NewApi">@color/colorGrey</item>
+        <item name="android:textColorHint">@color/colorGrey</item>
+    </style>
+
+    <style name="TextViewPersonalizado" parent="@android:style/Widget.TextView">
+        <item name="android:textSize">@dimen/text_size_normal</item>
+        <item name="android:textColor">@color/colorGrey</item>
+        <item name="android:textColorHint">@color/colorGrey</item>
+    </style>
+
+    <style name="CircularProgress" parent="Theme.AppCompat.Light">
+        <item name="colorAccent">?attr/primary</item>
+    </style>
+
+    <style name="TextProgressDialog" parent="@android:style/Widget.TextView">
+        <item name="android:textColor">@color/colorGrey</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+
+    <style name="LoginPasswordInputLand">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+
+    <style name="Estilo_Texto_Pos" parent="@android:style/Widget.TextView">
+        <item name="android:textSize">@dimen/tamano_texto_standar</item>
+        <item name="android:textColor">@color/colorStrongRed</item>
+    </style>
+
+
+    <style name="ToolBarStyle" parent="AppTheme">
+
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">@android:color/white</item>
+        <item name="actionMenuTextColor">@android:color/white</item>
+        <item name="android:homeAsUpIndicator">@drawable/ic_next</item>
+    </style>
+
+    <style name="Separador">
+        <item name="android:layout_width">2dp</item>
+        <item name="android:layout_height">24dp</item>
+        <item name="android:background">@color/colorWhite</item>
+        <item name="android:layout_marginStart">3dp</item>
+        <item name="android:layout_marginEnd">3dp</item>
+    </style>
+
+    <style name="TextViewUnDigito">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">24dp</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+
+    <style name="configuracionItems">
+
+        <item name="android:layout_width">120dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_gravity">center</item>
+
+    </style>
+
+    <style name="configuracionItemImagenes">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">30dp</item>
+    </style>
+
+    <style name="config_menu_reporte_ventas_item_text">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="android:textSize">13dp</item>
+    </style>
+
+    <style name="DatePickerStyle" parent="@android:style/Theme.Holo.Dialog" tools:ignore="NewApi">
+        <item name="android:textColor">@color/colorPrimary</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+
+    <style name="TicketBold">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="FullScreenDialogStyle" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+</resources>

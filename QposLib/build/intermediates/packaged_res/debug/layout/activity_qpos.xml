@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="@color/colorWhite">
+
+
+
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/header_qpos_activity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="10"
+
+        android:background="?attr/primaryDark"
+        android:orientation="horizontal"
+        android:foregroundGravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="@id/header_qpos_activity"
+                app:layout_constraintTop_toTopOf="@+id/header_qpos_activity"
+                app:layout_constraintBottom_toBottomOf="@id/header_qpos_activity"
+                android:src="@drawable/yaganaste"/>
+
+
+
+    </android.support.constraint.ConstraintLayout>
+
+
+<TextView
+    android:id="@+id/txt_status"
+    style="@style/Estilo_Texto_Pos"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/Seleccione_Conexion"
+    android:textAlignment="center"
+    android:textSize="@dimen/tamano_texto_standar"
+    app:layout_constraintBottom_toTopOf="@id/img_lector"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent" />
+
+
+<com.cunoraz.gifview.library.GifView
+    android:id="@+id/img_lector"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:contentDescription="@null"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/header_qpos_activity" />
+
+<com.pagatodo.qposlib.BotonClickUnico
+    android:id="@+id/btn_search"
+    android:layout_width="wrap_content"
+    android:layout_height = "wrap_content"
+    android:layout_marginBottom="@dimen/margen_mediano"
+    android:text="@string/bluetooth_select_device"
+    android:textAllCaps="false"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp"
+    android:drawableRight="@android:drawable/stat_sys_data_bluetooth"
+    android:textSize="@dimen/tamano_texto_standar"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent" />
+
+
+</android.support.constraint.ConstraintLayout>
+

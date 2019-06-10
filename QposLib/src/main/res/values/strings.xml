@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">qpos</string>
+    <!-- Bluethooth logg -->
+    <string name="scan_bt_device">Buscar Dispositivo</string>
+    <string name="Seleccione_Conexion">Conecte su Dispositivo</string>
+    <string name="Conectando_Dispositivo">Conectando Dispositivo, Espere un Momento</string>
+    <string name="Dispositivo_Conectado">Dispositivo Conectado, Espere un Momento</string>
+    <string name="Dispositivo_NoEncontrado">Dispositivo no Encontrado</string>
+    <string name="bluetooth_select_device">Seleccionar Dispositivo</string>
+    <string name="gen_desc">Descripción Genérica</string>
+</resources>

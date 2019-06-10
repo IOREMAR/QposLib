@@ -1,0 +1,356 @@
+package com.pagatodo.qposlib.dongleconnect;//NOPMD
+
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
+import android.util.TypedValue;
+import android.view.TextureView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+import com.cunoraz.gifview.library.GifView;
+import com.pagatodo.qposlib.PosInstance;
+import com.pagatodo.qposlib.R;
+import com.pagatodo.qposlib.abstracts.AbstractDongle;
+
+
+import com.pagatodo.qposlib.broadcasts.BroadcastListener;
+import com.pagatodo.qposlib.broadcasts.BroadcastManager;
+import com.pagatodo.qposlib.pos.PosResult;
+import com.pagatodo.qposlib.pos.dspread.DSpreadDevicePosFactory;
+
+
+//import com.pagatodoholdings.posandroid.utils.UpdateFirmware;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+
+import static com.pagatodo.qposlib.Logger.LOGGER;
+
+
+public class ConexionPosActivity extends Activity implements BroadcastListener ,  DongleConnect  { //NOSONAR
+
+    //----------UI-------------------------------------------------------
+
+
+    //----- Var ----------------------------------------------------------
+
+    public static final String NAME_RSA_PCI = "PCIEM.PEM";
+    private static final int BLUETHOOTH_REQUEST = 10;
+    private static final int BLUETHOOTH_DEVICES = 11;
+    public static final int QPOS_VENDOR_ID = 0x03EB;
+
+    private static final String TAG = ConexionPosActivity.class.getSimpleName();
+
+    protected static final int RC_HANDLE_INTERNET_PERM = 1;
+    protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
+    private BroadcastManager broadcastManager;
+    private GifView imgLector ;
+    private TextView txtStatus ;
+    private View headerLayout ;
+    private Button btnSearch;
+
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_qpos);
+            initUi();
+
+    }
+
+    protected void initUi() {
+        // Inicializa variables yAxis vistas
+        broadcastManager = new BroadcastManager(this,this );
+        broadcastManager.setDongleListener(this);
+        imgLector =  findViewById(R.id.img_lector);
+        imgLector.setGifResource(R.drawable.conectar_totem_blue);
+        txtStatus = findViewById(R.id.txt_status);
+        headerLayout = findViewById(R.id.header_qpos_activity);
+        btnSearch = findViewById(R.id.btn_search);
+        btnSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View view) {
+                broadcastManager.validateBluethoothPermisiion();
+            }
+        });
+
+        setReceivers();
+
+        if (checkUSBConnected()) {
+            onCheckForUsbDevices();
+        }
+    }
+
+    private int getAttributeReference(final int attribute){
+        final TypedValue typedValue = new TypedValue();
+        getTheme().resolveAttribute(attribute, typedValue, true);
+        return typedValue.resourceId;
+    }
+
+    private void setReceivers() {
+        try {
+            final IntentFilter filter = new IntentFilter();
+            filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+            filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+            filter.addAction(UsbManager.EXTRA_PERMISSION_GRANTED);
+            filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+            filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+            registerReceiver(broadcastManager, filter);
+        } catch (Exception ex) {
+            LOGGER.throwing(TAG, 1, ex, "Error al ingresar los Brodcast");
+            alertBuilder(true,"Error",ex.getMessage());
+        }
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    protected void onSuccessBluethoothPermissions() {
+        final BluetoothAdapter btAdapter = ((BluetoothManager) getSystemService(BLUETOOTH_SERVICE)).getAdapter();
+        if (btAdapter != null) {
+            if (btAdapter.getState() == BluetoothAdapter.STATE_OFF) {
+                final Intent enabler = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enabler, BLUETHOOTH_REQUEST);
+            }
+            if (btAdapter.getState() == BluetoothAdapter.STATE_ON) {
+                final Intent serverIntent = new Intent(this, ListaDispositivos.class);
+                startActivityForResult(serverIntent, BLUETHOOTH_DEVICES);
+            }
+        }
+    }
+
+    //----------Override Methods-------------------------------------------------------
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == BLUETHOOTH_REQUEST) {
+            onSuccessBluethoothPermissions();
+        } else if (requestCode == BLUETHOOTH_DEVICES && data != null) {
+
+            imgLector.setGifResource(getAttributeReference(R.attr.totem_connecting_gif));
+            final BluetoothDevice device = data.getParcelableExtra(ListaDispositivos.EXTRA_DEVICE);
+
+            if (device != null) {
+
+                //Pintado Mensaje
+                txtStatus.setText(R.string.Conectando_Dispositivo);
+                ///
+                final AbstractDongle qpos = new DSpreadDevicePosFactory().getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this);
+                PosInstance.getInstance().setDongle(qpos);
+//                imgLector.setGifResource(getAttributeReference(R.drawable.totem_connecting_gif));
+                broadcastManager.realizarConexion(qpos);
+            }
+        }
+    }
+
+    public void onCheckForUsbDevices() {
+
+        final UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        final HashMap<String, UsbDevice> deviceList;
+        final PendingIntent permissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
+                "com.android.example.USB_PERMISSION"), 0);
+        final IntentFilter filter = new IntentFilter(BroadcastManager.ACTION_USB_PERMISSION);
+        registerReceiver(broadcastManager, filter);
+
+        if (usbManager != null) {
+
+            deviceList = usbManager.getDeviceList();
+
+            final DSpreadDevicePosFactory dSpreadDevicePosFactory = new DSpreadDevicePosFactory();
+
+            for (final UsbDevice device : deviceList.values()) {
+
+                if (device.getVendorId() == QPOS_VENDOR_ID && !usbManager.hasPermission(device)) {
+
+                    usbManager.requestPermission(device, permissionIntent);
+                } else if (device.getVendorId() == QPOS_VENDOR_ID) {
+
+                    final AbstractDongle qpos = dSpreadDevicePosFactory.getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this);
+                    broadcastManager.realizarConexion(qpos);
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRecive(final String bundle) {
+
+        switch (bundle) {
+
+            case BroadcastManager.BLUETHOOTH_PERMISOS:
+                onSuccessBluethoothPermissions();
+                break;
+            case BroadcastManager.USB_CONECTADO:
+                onCheckForUsbDevices();
+                break;
+            case BroadcastManager.USB_ERROR_CONECTAR:
+                txtStatus.setText(R.string.Conectando_Dispositivo);
+//                imgLector.setGifResource(R.attr.totem_not_found_gif);
+                break;
+            case BroadcastManager.CONECTANDO_DISPOSITIVO:
+               txtStatus.setText(R.string.Conectando_Dispositivo);
+                imgLector.setVisibility(View.GONE);
+                break;
+            default:
+                break;
+        }
+    }
+
+
+
+    @Override
+    public void onDeviceConnected() {
+//       firebaseAnalytics.logEvent(Event.EVENT_DONGLE_CONNECTED.key, null);
+        txtStatus.setText(R.string.Dispositivo_Conectado);
+        imgLector.setVisibility(View.GONE);
+            //TODO Verificar la actualizacion de Firmware
+//        if(!MposApplication.getInstance().getConfigManager().getQposFirmware().equals(MposApplication.getInstance().getPreferedDongle().getQpos(PosInterface.Tipodongle.DSPREAD).getDevicePosInfo ().getFirmwareVersion())){
+//            cambiaDeActividad(UpdateFirmware.class);
+//        }else {
+               PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI,PosInstance.getInstance().getAppContext());
+//        }
+
+    }
+
+    @Override
+    public void ondevicedisconnected() {
+
+    }
+
+    @Override
+    public void deviceOnTransaction() {
+
+    }
+
+    @Override
+    public void onSessionKeysObtenidas() {
+        Intent data = new Intent();
+        setResult(RESULT_OK,data);
+        finish();
+//        cambiaDeActividad(LoginPCIActivity.class);
+    }
+
+//    @Override
+//    public void onRespuestaDongle(final PosResult result) {
+////        firebaseAnalytics.logEvent(Event.EVENT_DONGLE_CONNECT_ERROR.key, null);
+////        despliegaModal(true, false, "Dongle Error", result.getMessage(), new ModalFragment.CommonDialogFragmentCallBack() {
+//            @Override
+//            public void onAccept() {
+//                if ( MposApplication.getInstance().getPreferedDongle()!= null) {
+//                    MposApplication.getInstance().getPreferedDongle().closeCommunication();
+//                }
+//            }
+//        });
+//        binding.txtStatus.setText(getString(R.string.Seleccione_Conexion));
+//        binding.imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
+//        binding.imgLector.setVisibility(View.VISIBLE);
+//    }
+
+    @Override
+    public void onRequestNoQposDetected() {
+
+        imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
+//        txtStatus.setText(R.string.Dispositivo_NoEncontrado);
+    }
+
+    private boolean checkUSBConnected() {
+        final Intent intent = registerReceiver(null, new IntentFilter("android.hardware.usb.action.USB_STATE"));
+        if(intent != null) {
+            return intent.getExtras().getBoolean("connected");
+        }else {
+            return false;
+        }
+
+}
+    @Override
+    protected void onStop() {
+        try {
+            unregisterReceiver(broadcastManager);
+        } catch (Exception exe) {
+            LOGGER.throwing(TAG, 1, exe, exe.getMessage());
+        }
+        super.onStop();
+    }
+
+
+
+    private void alertBuilder( final boolean esDeError, final String cabecera, final String cuerpo){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                this);
+
+        // set title
+        alertDialogBuilder.setTitle(cabecera);
+
+        if(!esDeError) {
+            // set dialog message
+            alertDialogBuilder
+                    .setMessage(cuerpo)
+                    .setCancelable(false)
+                    .setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // if this button is clicked, close
+                            // current activity
+
+                            ConexionPosActivity.this.finish();
+                        }
+                    });
+
+        }else {
+
+            alertDialogBuilder
+                    .setMessage(cuerpo)
+                    .setCancelable(false)
+                    .setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // if this button is clicked, close
+                            // current activity
+
+                            ConexionPosActivity.this.finish();
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // if this button is clicked, just close
+                            // the dialog box and do nothing
+                            dialog.cancel();
+                        }
+                    });
+
+
+        }
+
+        // create alert dialog
+        AlertDialog alertDialog = alertDialogBuilder.create();
+
+        // show it
+        alertDialog.show();
+
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent data = new Intent();
+        setResult(RESULT_CANCELED,data);
+        finish();
+
+
+    }
+}
