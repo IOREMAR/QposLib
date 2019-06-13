@@ -12,10 +12,10 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.TypedValue;
-import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -24,27 +24,19 @@ import com.cunoraz.gifview.library.GifView;
 import com.pagatodo.qposlib.PosInstance;
 import com.pagatodo.qposlib.R;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
-
-
 import com.pagatodo.qposlib.broadcasts.BroadcastListener;
 import com.pagatodo.qposlib.broadcasts.BroadcastManager;
-import com.pagatodo.qposlib.pos.PosResult;
 import com.pagatodo.qposlib.pos.dspread.DSpreadDevicePosFactory;
 
-
-//import com.pagatodoholdings.posandroid.utils.UpdateFirmware;
-
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 
 import static com.pagatodo.qposlib.Logger.LOGGER;
 
+//import com.pagatodoholdings.posandroid.utils.UpdateFirmware;
 
-public class ConexionPosActivity extends Activity implements BroadcastListener ,  DongleConnect  { //NOSONAR
+public class ConexionPosActivity extends Activity implements BroadcastListener, DongleConnect { //NOSONAR
 
     //----------UI-------------------------------------------------------
-
 
     //----- Var ----------------------------------------------------------
 
@@ -57,26 +49,29 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
 
     protected static final int RC_HANDLE_INTERNET_PERM = 1;
     protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
-    private BroadcastManager broadcastManager;
-    private GifView imgLector ;
-    private TextView txtStatus ;
-    private View headerLayout ;
-    private Button btnSearch;
+    private CountDownTimer connect_Time;
+    private static final Long TIMER_LONG = 12000l;
+    private static final Long TIMER_TICK = 1000L;
+    private Boolean isConnected = false;
 
+    private BroadcastManager broadcastManager;
+    private GifView imgLector;
+    private TextView txtStatus;
+    private View headerLayout;
+    private Button btnSearch;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_qpos);
-            initUi();
-
+        setContentView(R.layout.activity_qpos);
+        initUi();
     }
 
     protected void initUi() {
         // Inicializa variables yAxis vistas
-        broadcastManager = new BroadcastManager(this,this );
+        broadcastManager = new BroadcastManager(this, this);
         broadcastManager.setDongleListener(this);
-        imgLector =  findViewById(R.id.img_lector);
+        imgLector = findViewById(R.id.img_lector);
         imgLector.setGifResource(R.drawable.conectar_totem_blue);
         txtStatus = findViewById(R.id.txt_status);
         headerLayout = findViewById(R.id.header_qpos_activity);
@@ -85,6 +80,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
             @Override
             public void onClick(final View view) {
                 broadcastManager.validateBluethoothPermisiion();
+                btnSearch.setEnabled(false);
             }
         });
 
@@ -95,7 +91,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
         }
     }
 
-    private int getAttributeReference(final int attribute){
+    private int getAttributeReference(final int attribute) {
         final TypedValue typedValue = new TypedValue();
         getTheme().resolveAttribute(attribute, typedValue, true);
         return typedValue.resourceId;
@@ -112,7 +108,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
             registerReceiver(broadcastManager, filter);
         } catch (Exception ex) {
             LOGGER.throwing(TAG, 1, ex, "Error al ingresar los Brodcast");
-            alertBuilder(true,"Error",ex.getMessage());
+            alertBuilder(true, "Error", ex.getMessage());
         }
     }
 
@@ -154,7 +150,12 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
                 PosInstance.getInstance().setDongle(qpos);
 //                imgLector.setGifResource(getAttributeReference(R.drawable.totem_connecting_gif));
                 broadcastManager.realizarConexion(qpos);
+                startTimer();
+            } else {
+                btnSearch.setEnabled(true);
             }
+        } else {
+            btnSearch.setEnabled(true);
         }
     }
 
@@ -204,7 +205,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
 //                imgLector.setGifResource(R.attr.totem_not_found_gif);
                 break;
             case BroadcastManager.CONECTANDO_DISPOSITIVO:
-               txtStatus.setText(R.string.Conectando_Dispositivo);
+                txtStatus.setText(R.string.Conectando_Dispositivo);
                 imgLector.setVisibility(View.GONE);
                 break;
             default:
@@ -212,18 +213,16 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
         }
     }
 
-
-
     @Override
     public void onDeviceConnected() {
 //       firebaseAnalytics.logEvent(Event.EVENT_DONGLE_CONNECTED.key, null);
         txtStatus.setText(R.string.Dispositivo_Conectado);
         imgLector.setVisibility(View.GONE);
-            //TODO Verificar la actualizacion de Firmware
+        //TODO Verificar la actualizacion de Firmware
 //        if(!MposApplication.getInstance().getConfigManager().getQposFirmware().equals(MposApplication.getInstance().getPreferedDongle().getQpos(PosInterface.Tipodongle.DSPREAD).getDevicePosInfo ().getFirmwareVersion())){
 //            cambiaDeActividad(UpdateFirmware.class);
 //        }else {
-               PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI,PosInstance.getInstance().getAppContext());
+        PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
 //        }
 
     }
@@ -241,7 +240,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
     @Override
     public void onSessionKeysObtenidas() {
         Intent data = new Intent();
-        setResult(RESULT_OK,data);
+        setResult(RESULT_OK, data);
         finish();
 //        cambiaDeActividad(LoginPCIActivity.class);
     }
@@ -265,19 +264,18 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
     @Override
     public void onRequestNoQposDetected() {
 
-        imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
-//        txtStatus.setText(R.string.Dispositivo_NoEncontrado);
+        isConnected = false;
     }
 
     private boolean checkUSBConnected() {
         final Intent intent = registerReceiver(null, new IntentFilter("android.hardware.usb.action.USB_STATE"));
-        if(intent != null) {
+        if (intent != null) {
             return intent.getExtras().getBoolean("connected");
-        }else {
+        } else {
             return false;
         }
+    }
 
-}
     @Override
     protected void onStop() {
         try {
@@ -288,16 +286,14 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
         super.onStop();
     }
 
-
-
-    private void alertBuilder( final boolean esDeError, final String cabecera, final String cuerpo){
+    private void alertBuilder(final boolean esDeError, final String cabecera, final String cuerpo) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                 this);
 
         // set title
         alertDialogBuilder.setTitle(cabecera);
 
-        if(!esDeError) {
+        if (!esDeError) {
             // set dialog message
             alertDialogBuilder
                     .setMessage(cuerpo)
@@ -310,8 +306,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
                             ConexionPosActivity.this.finish();
                         }
                     });
-
-        }else {
+        } else {
 
             alertDialogBuilder
                     .setMessage(cuerpo)
@@ -331,8 +326,6 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
                             dialog.cancel();
                         }
                     });
-
-
         }
 
         // create alert dialog
@@ -340,17 +333,39 @@ public class ConexionPosActivity extends Activity implements BroadcastListener ,
 
         // show it
         alertDialog.show();
-
     }
-
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         Intent data = new Intent();
-        setResult(RESULT_CANCELED,data);
+        setResult(RESULT_CANCELED, data);
         finish();
+    }
 
+    private void startTimer() {
+        connect_Time = new CountDownTimer(TIMER_LONG, TIMER_TICK) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                if (isConnected) {
+                    txtStatus.setText(R.string.Dispositivo_Conectado);
+                    imgLector.setVisibility(View.GONE);
+                    PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
+                    connect_Time.cancel();
+                }
+            }
 
+            @Override
+            public void onFinish() {
+                if (!isConnected) {
+                    imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
+                    txtStatus.setText(R.string.Dispositivo_NoEncontrado);
+                    btnSearch.setEnabled(true);
+                    PosInstance.getInstance().getDongle().deviceCancel();
+                }
+            }
+        };
+
+        connect_Time.start();
     }
 }

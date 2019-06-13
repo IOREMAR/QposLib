@@ -1,6 +1,5 @@
 package com.pagatodo.qposlib;
 
-
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
@@ -15,8 +14,6 @@ import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
-
-
 import com.pagatodo.qposlib.pos.ICCDecodeData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
 import com.pagatodo.qposlib.pos.PosResult;
@@ -24,11 +21,9 @@ import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
 import com.pagatodo.qposlib.pos.dspread.POSBluetoothDevice;
 
-import Decoder.BASE64Decoder;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
@@ -46,8 +41,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle implements QPOSService.QPOSServiceListener{
+import Decoder.BASE64Decoder;
 
+public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle implements QPOSService.QPOSServiceListener {
 
     /*Constantes
      */
@@ -55,16 +51,15 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
     private final String TAG = QPosManager.class.getSimpleName();
-    public static final String  TERMINAL_CAPS = "TERMINAL_CAPS";
-    public static final String  ADITIONAL_CAPS = "ADITIONAL_CAPS";
-    public static final String  CURRENCY_CODE = "CURRENCY_CODE";
-    public static final String  COUNTRY_CODE = "COUNTRY_CODE";
-    public static final String  CVM_LIMIT = "CVM_LIMIT";
+    public static final String TERMINAL_CAPS = "TERMINAL_CAPS";
+    public static final String ADITIONAL_CAPS = "ADITIONAL_CAPS";
+    public static final String CURRENCY_CODE = "CURRENCY_CODE";
+    public static final String COUNTRY_CODE = "COUNTRY_CODE";
+    public static final String CVM_LIMIT = "CVM_LIMIT";
     public static final String REQUIERE_PIN = "INGRESE PIN";
     private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07"};
     /*Variables
      */
-
 
     private QPOSService mPosService;
     private DspreadDevicePOS mDevice;
@@ -74,22 +69,27 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private QPOSService.DoTradeResult mCurrentTradeResult;
     private Hashtable<String, String> decodeData;
     private ArrayList<String> mListCapabilities;
-    private Map<String, String> emvTags =  new ArrayMap<>() ;
+    private Map<String, String> emvTags = new ArrayMap<>();
 
-    public interface QposServiceListener{
+    public interface QposServiceListener {
         void onQposIdResult(Hashtable<String, String> hashtable);
+
         void onDoTradeResult(Hashtable<String, String> hashtable);
+
         void onValidatorProfile();
+
         void setPosAmount();
+
         Context getContext();
+
         TransactionAmountData getTransactionAmountData();
+
         void onReturnCustomConfigResult();
+
         void onRequestOnlineProcess();
     }
 
-
-
-    public void setQposDongleListener(DongleListener listener){
+    public void setQposDongleListener(DongleListener listener) {
         dongleListener = listener;
     }
 
@@ -103,8 +103,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void setQposServiceListener(QposServiceListener qposServiceCallback) {
         mQposServiceCallback = qposServiceCallback;
     }
-        @Override
-    public void openCommunication(){
+
+    @Override
+    public void openCommunication() {
         if (!isQPOSConnected()) {
             this.mDevice = mDevicePos;
 
@@ -121,7 +122,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         mPosService.setShutDownTime(1800);
 
-        switch ( mDevice.getCommunicationMode() ) {
+        switch (mDevice.getCommunicationMode()) {
             case USB_OTG_CDC_ACM:
                 final UsbDevice mUsbDevice = (UsbDevice) mDevicePos.getmDevicePos();
                 mPosService.openUsb(mUsbDevice);
@@ -137,7 +138,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.setPosExistFlag(true);
     }
 
-    public void closeCommunication(){
+    public void closeCommunication() {
         mQStatePOS.updateState(POSConnectionState.STATE_POS.CLOSE);
 
         switch (mDevice.getCommunicationMode()) {
@@ -168,13 +169,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void getPin(String maskedPAN) {
-        mPosService.getPin(1, 10, 8,REQUIERE_PIN , maskedPAN, getDateforTRX(), 15);
+        mPosService.getPin(1, 10, 8, REQUIERE_PIN, maskedPAN, getDateforTRX(), 15);
     }
 
     @Override
-    public void getSessionKeys (final String clavePublicaFile , final Context context ) {
+    public void getSessionKeys(final String clavePublicaFile, final Context context) {
         try {
-            mPosService.updateRSA(getPublicKey(clavePublicaFile,context),clavePublicaFile);
+            mPosService.updateRSA(getPublicKey(clavePublicaFile, context), clavePublicaFile);
         } catch (Exception exe) {
 
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Llave No Generada", false));
@@ -184,48 +185,42 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void doTransaccion(TransactionAmountData transactionAmountData) {
 
-      if(mPosService.isQposPresent()) {
+        if (mPosService.isQposPresent()) {
 
-          mListCapabilities = new ArrayList<>();
+            mListCapabilities = new ArrayList<>();
 
-          setListCapabillities(transactionAmountData.getCapacidades());
+            setListCapabillities(transactionAmountData.getCapacidades());
 
-          if ( transactionAmountData.getTipoOperacion().equals("D") ) {
-              mPosService.setQuickEmv(true);
-          } else {
-              if ( transactionAmountData.getAmountIcon().equals("") ) {
-                  mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
-              } else {
-                  mPosService.setQuickEmv(true);
-              }
-          }
+            if (transactionAmountData.getTipoOperacion().equals("D")) {
+                mPosService.setQuickEmv(true);
+            } else {
+                if (transactionAmountData.getAmountIcon().equals("")) {
+                    mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
+                } else {
+                    mPosService.setQuickEmv(true);
+                }
+            }
 
-          mPosService.setFormatId("0025");
+            mPosService.setFormatId("0025");
 
-          this.transactionAmountData = transactionAmountData;
+            this.transactionAmountData = transactionAmountData;
 
-          final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
-          Log.i(TAG, lisCap);
+            final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
+            Log.i(TAG, lisCap);
 
-          mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
-      }else {
-          onRequestQposDisconnected();
-      }
-
-
-
-
-
-
+            mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
+        } else {
+            onRequestQposDisconnected();
+        }
     }
 
-    public PublicKey getPublicKey(final String filename ,final Context contextApp) throws Exception {//NOSONAR
+    public PublicKey getPublicKey(final String filename, final Context contextApp) throws Exception {//NOSONAR
         final InputStream inputStream = contextApp.getAssets().open(filename);
         final BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
         String line = null;
         final StringBuilder sb = new StringBuilder();
 
-        while((line = br.readLine()) != null) {
+        while ((line = br.readLine()) != null) {
             if (line.contains("BEGIN")) {
                 sb.delete(0, sb.length());
             } else {
@@ -244,26 +239,23 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return keyFactory.generatePublic(keySpec);
     }
 
-
     public boolean isQPOSConnected() {
         return mQStatePOS.isConnected();
     }
-
-
 
     public void setOnRespuestaDongle(PosResult.PosTransactionResult operation, String message, boolean isCorrecta) {
         dongleListener.onRespuestaDongle(new PosResult(operation, message, isCorrecta));
     }
 
-    public void setQuickEmv(boolean set){
+    public void setQuickEmv(boolean set) {
         mPosService.setQuickEmv(set);
     }
 
-    public void setPosServiceAmountIcon(String icon){
+    public void setPosServiceAmountIcon(String icon) {
         mPosService.setAmountIcon(icon);
     }
 
-    public void setPosFormatId(String formatId){
+    public void setPosFormatId(String formatId) {
         mPosService.setFormatId(formatId);
     }
 
@@ -277,34 +269,34 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 //        mPosService.updateEmvConfig(emvCapApp,emvCapkCfg);
 //    }
 
-    public void updateEmvApp(){
+    public void updateEmvApp() {
         if (mListCapabilities != null) {
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         }
     }
 
-    public int updateFirmware(byte[] dataToUpdate, String file){
+    public int updateFirmware(byte[] dataToUpdate, String file) {
         return mPosService.updatePosFirmware(dataToUpdate, file);
     }
 
-    public void logCapabilities(){
-        final String lisCap =  "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
+    public void logCapabilities() {
+        final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
         Log.i(TAG, lisCap);
     }
 
-    public int getUpdateProgress(){
+    public int getUpdateProgress() {
         return mPosService.getUpdateProgress();
     }
 
-    public void cancelOperacion(){
+    public void cancelOperacion() {
         mPosService.resetQPOS();
     }
 
-    public void operacionFinalizada(String arpc){
+    public void operacionFinalizada(String arpc) {
         mPosService.sendOnlineProcessResult(arpc);
     }
 
-    public Map<String, String> getIccTags(){
+    public Map<String, String> getIccTags() {
         return emvTags;
     }
 
@@ -313,28 +305,27 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return null;
     }
 
-    public DspreadDevicePOS getDevicePos(){
+    public DspreadDevicePOS getDevicePos() {
         return mDevice;
     }
 
-    public QPOSDeviceInfo getDevicePosInfo(){
+    public QPOSDeviceInfo getDevicePosInfo() {
         return mQPosDeviceInfo;
     }
 
-
-    public void generateSessionKeys(){
+    public void generateSessionKeys() {
         mPosService.generateSessionKeys();
     }
 
-    public void deviceOnTransaction(){
+    public void deviceOnTransaction() {
         dongleConnect.deviceOnTransaction();
     }
 
-    public boolean isTradeResultDifferentFromMcrAndIcc(){
+    public boolean isTradeResultDifferentFromMcrAndIcc() {
         return mCurrentTradeResult != QPOSService.DoTradeResult.MCR && mCurrentTradeResult != QPOSService.DoTradeResult.ICC;
     }
 
-    public boolean isTradeResultMcr(){
+    public boolean isTradeResultMcr() {
         if (mCurrentTradeResult != null) {
             return mCurrentTradeResult == QPOSService.DoTradeResult.MCR;
         }
@@ -342,7 +333,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return false;
     }
 
-    public void doEmvAppOnPosService(){
+    public void doEmvAppOnPosService() {
         mPosService.doEmvApp(QPOSService.EmvOption.START);
     }
 
@@ -380,23 +371,23 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
     }
 
-    public void setPosServiceKeyValue(String keyValue){
+    public void setPosServiceKeyValue(String keyValue) {
         mPosService.setKeyValue(keyValue);
     }
 
-    public void setBlockAddressOnPosService(String blockAddr){
+    public void setBlockAddressOnPosService(String blockAddr) {
         mPosService.setBlockaddr(blockAddr);
     }
 
-    public void doMifareCardOnPosService(String doMifareCardParas, int timeout){
+    public void doMifareCardOnPosService(String doMifareCardParas, int timeout) {
         mPosService.doMifareCard(doMifareCardParas, timeout);
     }
 
-    public void setPosServiceAmount(String decimalesAmount, String cashbackAmount, TransactionAmountData transaction, boolean isPosDisplayAmount){
+    public void setPosServiceAmount(String decimalesAmount, String cashbackAmount, TransactionAmountData transaction, boolean isPosDisplayAmount) {
         mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
     }
 
-    public void setListCapabillities(final Map<String,String> capabillities) {
+    public void setListCapabillities(final Map<String, String> capabillities) {
 
         if (mListCapabilities == null) {
             mListCapabilities = new ArrayList<>();
@@ -410,7 +401,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mListCapabilities.add(EmvAppTag.terminal_execute_cvm_limit + capabillities.get(CVM_LIMIT));
     }
 
-    public void getPosServicePin(String maskedPAN, String dateforTRX){
+    public void getPosServicePin(String maskedPAN, String dateforTRX) {
         mPosService.getPin(1, 10, 8, "INGRESE PIN", maskedPAN, dateforTRX, 15);
     }
 
@@ -491,7 +482,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         } else {
             mPosService.getQposId();
         }
-
     }
 
     @Override
@@ -502,18 +492,18 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onBatchReadMifareCardResult(String s, Hashtable<String, List<String>> hashtable) {
-        Log.i(TAG, "onBatchReadMifareCardResult "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "onBatchReadMifareCardResult " + mPosService.getMifareStatusMsg());
         dongleListener.onBatchReadMifareCardResult(s, hashtable);
     }
 
     @Override
     public void onBatchWriteMifareCardResult(String s, Hashtable<String, List<String>> hashtable) {
         final String status = mPosService.getMifareStatusMsg();
-        Log.i(TAG, "onBatchWriteMifareCardResult "+status);
+        Log.i(TAG, "onBatchWriteMifareCardResult " + status);
 
         if ("SUCCESS".equals(status)) {//NOSONAR
             dongleListener.onBatchWriteMifareCardResult(s, hashtable);
-        }else {
+        } else {
             dongleListener.onErrorWriteMifareCard();
         }
     }
@@ -529,9 +519,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (doTradeResult != QPOSService.DoTradeResult.MCR && doTradeResult != QPOSService.DoTradeResult.ICC) {
             onFailTradeResult(doTradeResult);
         } else {
-            emvTags =  reciverEMVTags();
-            if ( doTradeResult == QPOSService.DoTradeResult.MCR ) {
-                dongleListener.onResultData(hashtable,DongleListener.DoTradeResult.MCR);
+            emvTags = reciverEMVTags();
+            if (doTradeResult == QPOSService.DoTradeResult.MCR) {
+                dongleListener.onResultData(hashtable, DongleListener.DoTradeResult.MCR);
             } else {
                 Log.i(TAG, " ");
                 mPosService.doEmvApp(QPOSService.EmvOption.START);
@@ -542,87 +532,84 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onFinishMifareCardResult(boolean isFailedChip) {
-        Log.i(TAG, "onFinishMifareCardResult "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "onFinishMifareCardResult " + mPosService.getMifareStatusMsg());
         dongleListener.onFinishMifareCardResult(isFailedChip);
     }
 
     @Override
     public void onVerifyMifareCardResult(boolean isFailedChip) {
         final String status = mPosService.getMifareStatusMsg();
-        Log.i(TAG, " onVerifyMifareCardResult "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, " onVerifyMifareCardResult " + mPosService.getMifareStatusMsg());
 
         if ("SUCCESS".equals(status)) {//NOSONAR
             dongleListener.onVerifyMifareCardResult(isFailedChip);
-        }else {
+        } else {
             dongleListener.onErrorWriteMifareCard();
         }
     }
 
     @Override
     public void onReadMifareCardResult(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "onReadMifareCardResult "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "onReadMifareCardResult " + mPosService.getMifareStatusMsg());
     }
 
     @Override
     public void onWriteMifareCardResult(boolean b) {
-        Log.i(TAG, "onWriteMifareCardResult "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "onWriteMifareCardResult " + mPosService.getMifareStatusMsg());
     }
 
     @Override
     public void onOperateMifareCardResult(Hashtable<String, String> hashtable) {
         final String status = mPosService.getMifareStatusMsg();
-        Log.i(TAG, "onOperateMifareCardResult "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "onOperateMifareCardResult " + mPosService.getMifareStatusMsg());
 
         if ("SUCCESS".equals(status)) {
             dongleListener.onOperateMifareCardResult(hashtable);
-        }else {
+        } else {
             dongleListener.onErrorWriteMifareCard();
         }
     }
 
     @Override
     public void getMifareCardVersion(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "getMifareCardVersion "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "getMifareCardVersion " + mPosService.getMifareStatusMsg());
     }
 
     @Override
     public void getMifareReadData(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "getMifareReadData "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "getMifareReadData " + mPosService.getMifareStatusMsg());
     }
 
     @Override
     public void getMifareFastReadData(Hashtable<String, String> hashtable) {
-        Log.i(TAG,  "getMifareFastReadData "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "getMifareFastReadData " + mPosService.getMifareStatusMsg());
     }
 
     @Override
     public void writeMifareULData(String s) {
-        Log.i(TAG, "writeMifareULData "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "writeMifareULData " + mPosService.getMifareStatusMsg());
     }
 
     @Override
     public void verifyMifareULData(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "verifyMifareULData "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "verifyMifareULData " + mPosService.getMifareStatusMsg());
     }
 
     @Override
     public void transferMifareData(String s) {
-        Log.i(TAG, "transferMifareData "+mPosService.getMifareStatusMsg());
+        Log.i(TAG, "transferMifareData " + mPosService.getMifareStatusMsg());
     }
 
     @Override
     public void onRequestSetAmount() {
         mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
-
-
-
     }
 
     @Override
     public void onRequestSelectEmvApp(ArrayList<String> listEMVApps) {
-        if ( listEMVApps.size() == 1 ) {
+        if (listEMVApps.size() == 1) {
             mPosService.selectEmvApp(0);
-        }else if (listEMVApps.size() > 1){
+        } else if (listEMVApps.size() > 1) {
             final AplicacionEmv aplicacionEmv = new AplicacionEmv() {
                 @Override
                 public void seleccionAppEmv(final int position) {
@@ -644,15 +631,20 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void deviceCancel() {
+        mPosService.close();
+    }
+
+    @Override
     public void onRequestOnlineProcess(String tlvString) {
-       Log.i(TAG, tlvString);
+        Log.i(TAG, tlvString);
         decodeData = mPosService.anlysEmvIccData(tlvString);
         decodeData.put(ICCDecodeData.TLV.getLabel(), tlvString);
         //TODO Tiempo De Preguntar Los TAGS Al Dongle
 //        CamposEMVData.getInstance().reciverEMVTags();
-        final String iccTag = "9F33: ".concat(mPosService.getICCTag(0,1,"9F33").toString());
-        Log.v (TAG ,iccTag);
-        dongleListener.onResultData (decodeData,DongleListener.DoTradeResult.ICC);
+        final String iccTag = "9F33: ".concat(mPosService.getICCTag(0, 1, "9F33").toString());
+        Log.v(TAG, iccTag);
+        dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.ICC);
     }
 
     @Override
@@ -738,7 +730,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     break;
                 case DEVICE_RESET:
 
-                        dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
+                    dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
 
                     break;
                 default:
@@ -841,7 +833,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         try {
             TimeUnit.SECONDS.sleep(1);
-        } catch ( InterruptedException exe ) {
+        } catch (InterruptedException exe) {
             Log.e(TAG, "Error al detener el thread");
             Thread.currentThread().interrupt();
         }
@@ -1072,11 +1064,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     }
 
-
-    private String setDecimalesAmount(final String monto){
+    private String setDecimalesAmount(final String monto) {
         String amount = monto;
         //TODO Seleccionar el monto del pais - difiere del que existen el la BD ?
-        if ( transactionAmountData.getDecimales() == 0 && !"".equals(monto)){
+        if (transactionAmountData.getDecimales() == 0 && !"".equals(monto)) {
             amount = amount.concat("00");
         }
         return amount;
@@ -1088,25 +1079,17 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return dateFormat.format(date);
     }
 
-
-
-
-
     public Map<String, String> reciverEMVTags() {
 
         final StringBuilder sBuilder = new StringBuilder();
         StringBuilder tlvresponcebuilder;
 
-        for ( final String tag : TAGSEMV ) {
+        for (final String tag : TAGSEMV) {
             sBuilder.append(tag);
         }
 
         final Integer emvLength = Integer.valueOf(TAGSEMV.length);
         //TODO Usar Libreria De Qpos
-       return mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
-
+        return mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
     }
-
-
-
-    }
+}
