@@ -44,8 +44,8 @@ public interface PosInterface {
      */
     public enum Tipodongle {
         DSPREAD,
-        NODSPREAD
-
+        NODSPREAD,
+        SUNMI
     }
 
 //    void doMifareCard(MifareCommand mifareCommand, int timeout);

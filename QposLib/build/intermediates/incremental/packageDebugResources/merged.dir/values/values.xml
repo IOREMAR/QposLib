@@ -36,32 +36,6 @@
     <color name="colorStrongRed">#711611</color>
     <color name="colorWhite">#ffffff</color>
     <color name="colorbackgroudnproyect">#fbfbfb</color>
-    <declare-styleable name="BotonClickUnico">
-        <attr format="integer" name="delay"/>
-    </declare-styleable>
-    <declare-styleable name="EditTextDatosUsuarios">
-        <attr format="string" name="hint"/>
-        <attr format="reference" name="icono"/>
-        <attr format="boolean" name="opcional"/>
-        <attr format="boolean" name="centrado"/>
-        <attr format="boolean" name="habilitado"/>
-        <attr format="integer" name="tamanos_hint"/>
-        <attr format="integer" name="tamanos_letra_sp"/>
-        <attr name="android:inputType"/>
-        <attr name="android:gravity"/>
-    </declare-styleable>
-    <declare-styleable name="EditTextEspecial">
-        <attr format="string" name="hint_s"/>
-        <attr format="reference" name="icono_s"/>
-        <attr format="string" name="ime_s"/>
-    </declare-styleable>
-    <declare-styleable name="IndicadorEstado">
-        <attr format="integer" name="number_states"/>
-        <attr format="string" name="slider_title"/>
-    </declare-styleable>
-    <declare-styleable name="SpinnerConTitulo">
-        <attr format="string" name="cabecera"/>
-    </declare-styleable>
     <dimen name="altura_boton">30dp</dimen>
     <dimen name="altura_items_carro_adapter">30dp</dimen>
     <dimen name="ancho_campos_registro">-1px</dimen>
@@ -138,7 +112,7 @@
     <style name="CircularProgress" parent="Theme.AppCompat.Light">
         <item name="colorAccent">?attr/primary</item>
     </style>
-    <style name="DatePickerStyle" parent="@android:style/Theme.Holo.Dialog" ns1:ignore="NewApi">
+    <style name="DatePickerStyle" ns1:ignore="NewApi" parent="@android:style/Theme.Holo.Dialog">
         <item name="android:textColor">@color/colorPrimary</item>
         <item name="android:gravity">center</item>
     </style>
@@ -198,7 +172,7 @@
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">@android:color/white</item>
         <item name="actionMenuTextColor">@android:color/white</item>
-        <item name="android:homeAsUpIndicator">@drawable/ic_next</item>
+        <!--<item name="android:homeAsUpIndicator">@drawable/ic_next</item>-->
     </style>
     <style name="config_menu_reporte_ventas_item_text">
         <item name="android:layout_width">wrap_content</item>
@@ -219,4 +193,30 @@
         <item name="android:layout_gravity">center</item>
 
     </style>
+    <declare-styleable name="BotonClickUnico">
+        <attr format="integer" name="delay"/>
+    </declare-styleable>
+    <declare-styleable name="EditTextDatosUsuarios">
+        <attr format="string" name="hint"/>
+        <attr format="reference" name="icono"/>
+        <attr format="boolean" name="opcional"/>
+        <attr format="boolean" name="centrado"/>
+        <attr format="boolean" name="habilitado"/>
+        <attr format="integer" name="tamanos_hint"/>
+        <attr format="integer" name="tamanos_letra_sp"/>
+        <attr name="android:inputType"/>
+        <attr name="android:gravity"/>
+    </declare-styleable>
+    <declare-styleable name="EditTextEspecial">
+        <attr format="string" name="hint_s"/>
+        <attr format="reference" name="icono_s"/>
+        <attr format="string" name="ime_s"/>
+    </declare-styleable>
+    <declare-styleable name="IndicadorEstado">
+        <attr format="integer" name="number_states"/>
+        <attr format="string" name="slider_title"/>
+    </declare-styleable>
+    <declare-styleable name="SpinnerConTitulo">
+        <attr format="string" name="cabecera"/>
+    </declare-styleable>
 </resources>

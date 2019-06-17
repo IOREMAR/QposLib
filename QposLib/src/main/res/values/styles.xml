@@ -96,7 +96,7 @@
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">@android:color/white</item>
         <item name="actionMenuTextColor">@android:color/white</item>
-        <item name="android:homeAsUpIndicator">@drawable/ic_next</item>
+        <!--<item name="android:homeAsUpIndicator">@drawable/ic_next</item>-->
     </style>
 
     <style name="Separador">
