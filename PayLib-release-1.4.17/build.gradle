@@ -1,2 +1,4 @@
 configurations.maybeCreate("default")
 artifacts.add("default", file('PayLib-release-1.4.17.aar'))
+apply plugin: 'com.github.dcendents.android-maven'
+group = 'pagatodo.test'
