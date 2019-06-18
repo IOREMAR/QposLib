@@ -10,27 +10,20 @@ public class PosInstance {
 
     private static PosInstance instance;
 
-    private AbstractDongle Dongle ;
+    private AbstractDongle Dongle;
 
-    private Context AppContext ;
+    private Context AppContext;
 
-    private Hashtable<String, String> sessionKeys ;
-
-
-
+    private Hashtable<String, String> sessionKeys;
 
     public static PosInstance getInstance() {
-        synchronized ( PosInstance.class ) {
-            if ( instance == null ) {
+        synchronized (PosInstance.class) {
+            if (instance == null) {
                 instance = new PosInstance();
             }
         }
         return instance;
     }
-
-
-
-
 
     public AbstractDongle getDongle() {
         return Dongle;
@@ -48,8 +41,6 @@ public class PosInstance {
         AppContext = appContext;
     }
 
-
-
     public Hashtable<String, String> getSessionKeys() {
         return sessionKeys;
     }
@@ -57,11 +48,4 @@ public class PosInstance {
     public void setSessionKeys(Hashtable<String, String> sessionKeys) {
         this.sessionKeys = sessionKeys;
     }
-
-
-
-
-
-
-
 }

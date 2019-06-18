@@ -1,9 +1,14 @@
 package com.pagatodo.qposlib;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.TextUtils;
+import android.widget.Toast;
+
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
@@ -71,11 +76,24 @@ public class SunmiPosManager extends AbstractDongle {
 
     private TransactionAmountData transactionAmountData;
 
+    private SunmiPosManager() {
+    }
+
     public SunmiPosManager(DongleConnect listener, Hashtable<String, String> hashtable) {
         super(listener);
         this.setPosSunmi(this);
         this.sessionKeys = hashtable;
         connectPayService();
+    }
+
+    public static boolean isSunmiDevice() {
+        Intent intent = new Intent("sunmi.intent.action.PAY_HARDWARE");
+        intent.setPackage("com.sunmi.pay.hardware_v3");
+
+        PackageManager pkgManager = PosInstance.getInstance().getAppContext().getPackageManager();
+        List<ResolveInfo> infos = pkgManager.queryIntentServices(intent, 0);
+
+        return infos != null && !infos.isEmpty();
     }
 
     private void connectPayService() {

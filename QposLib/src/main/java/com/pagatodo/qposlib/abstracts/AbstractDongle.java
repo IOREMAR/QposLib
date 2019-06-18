@@ -19,6 +19,9 @@ public abstract class AbstractDongle implements PosInterface {
     protected QPosManager qposDspread;
     protected SunmiPosManager posSunmi;
 
+    public AbstractDongle() {
+    }
+
     public AbstractDongle(final DongleConnect listener) {
         dongleConnect = listener;
     }
