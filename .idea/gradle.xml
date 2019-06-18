@@ -8,7 +8,6 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/PayLib-release-1.4.18" />
             <option value="$PROJECT_DIR$/QposLib" />
             <option value="$PROJECT_DIR$/app" />
           </set>
