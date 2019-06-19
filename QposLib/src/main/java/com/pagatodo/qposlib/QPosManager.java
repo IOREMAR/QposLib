@@ -633,6 +633,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void deviceCancel() {
         mPosService.close();
+        closeCommunication();
     }
 
     @Override
