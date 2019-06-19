@@ -50,7 +50,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
     protected static final int RC_HANDLE_INTERNET_PERM = 1;
     protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
     private CountDownTimer connect_Time;
-    private static final Long TIMER_LONG = 3000L;
+    private static final Long TIMER_LONG = 6000L;
     private static final Long TIMER_TICK = 1000L;
     private Boolean isConnected = false;
 
