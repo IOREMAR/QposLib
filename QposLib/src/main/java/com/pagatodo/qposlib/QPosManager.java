@@ -139,23 +139,26 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public void closeCommunication() {
-        mQStatePOS.updateState(POSConnectionState.STATE_POS.CLOSE);
+        if(mPosService !=null) {
+            mQStatePOS.updateState(POSConnectionState.STATE_POS.CLOSE);
 
-        switch (mDevice.getCommunicationMode()) {
-            case BLUETOOTH:
-            case BLUETOOTH_BLE:
-                mPosService.disconnectBT();
-                break;
-            case USB:
-            case USB_OTG_CDC_ACM:
-                mPosService.closeUsb();
-                break;
-            default:
-                mPosService.close();
-                break;
+            switch (mDevice.getCommunicationMode()) {
+                case BLUETOOTH:
+                case BLUETOOTH_BLE:
+                    mPosService.disconnectBT();
+                    break;
+                case USB:
+                case USB_OTG_CDC_ACM:
+                    mPosService.closeUsb();
+                    break;
+                default:
+                    mPosService.close();
+                    break;
+            }
+            mPosService.close();
+            mPosService.onDestroy();
         }
-        mPosService.onDestroy();
-    }
+	}	
 
     @Override
     public void resetQPOS() {
@@ -717,6 +720,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
             switch (error) {
                 case TIMEOUT:
+                    onRequestNoQposDetected();
+                    break;
                 case CMD_TIMEOUT:
                 case CMD_NOT_AVAILABLE:
                     dongleConnect.onRequestNoQposDetected();

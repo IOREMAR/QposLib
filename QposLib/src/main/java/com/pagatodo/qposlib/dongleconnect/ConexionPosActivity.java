@@ -263,8 +263,8 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
 
     @Override
     public void onRequestNoQposDetected() {
+        //  isConnected = false;
 
-        isConnected = false;
     }
 
     private boolean checkUSBConnected() {
@@ -361,7 +361,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
                     imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
                     txtStatus.setText(R.string.Dispositivo_NoEncontrado);
                     btnSearch.setEnabled(true);
-                    PosInstance.getInstance().getDongle().deviceCancel();
+                    PosInstance.getInstance().getDongle().closeCommunication();
                 }
             }
         };
