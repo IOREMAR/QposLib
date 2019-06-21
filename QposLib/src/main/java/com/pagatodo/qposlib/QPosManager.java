@@ -139,7 +139,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public void closeCommunication() {
-        if(mPosService !=null) {
+        if (mPosService != null) {
             mQStatePOS.updateState(POSConnectionState.STATE_POS.CLOSE);
 
             switch (mDevice.getCommunicationMode()) {
@@ -155,10 +155,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     mPosService.close();
                     break;
             }
-            mPosService.close();
             mPosService.onDestroy();
         }
-	}	
+    }
 
     @Override
     public void resetQPOS() {
@@ -735,9 +734,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     // NONE
                     break;
                 case DEVICE_RESET:
-
-                    dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
-
+                    if (transactionAmountData == null && decodeData != null) {
+                        dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
+                    }
                     break;
                 default:
                     dongleConnect.onRequestNoQposDetected();

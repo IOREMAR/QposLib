@@ -31,6 +31,7 @@ import com.pagatodo.qposlib.pos.dspread.DSpreadDevicePosFactory;
 import java.util.HashMap;
 
 import static com.pagatodo.qposlib.Logger.LOGGER;
+import static com.pagatodo.qposlib.broadcasts.BroadcastManager.BLUETHOOTH_DESCONECTADO;
 
 //import com.pagatodoholdings.posandroid.utils.UpdateFirmware;
 
@@ -49,9 +50,35 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
 
     protected static final int RC_HANDLE_INTERNET_PERM = 1;
     protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
-    private CountDownTimer connect_Time;
-    private static final Long TIMER_LONG = 6000L;
+    private CountDownTimer connect_Time = new CountDownTimer(TIMER_LONG, TIMER_END) {
+        @Override
+        public void onTick(long millisUntilFinished) {
+            if (isConnected) {
+//                firebaseAnalytics.logEvent(Event.EVENT_DONGLE_CONNECTED.key, null);
+                txtStatus.setText(R.string.Dispositivo_Conectado);
+                imgLector.setVisibility(View.GONE);
+                PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
+                connect_Time.cancel();
+            }
+        }
+
+        @Override
+        public void onFinish() {
+            if (!isConnected) {
+                imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
+                txtStatus.setText(R.string.Dispositivo_NoEncontrado);
+                btnSearch.setEnabled(true);
+                PosInstance.getInstance().getDongle().closeCommunication();
+
+                broadcastManager.btDisconnect();
+            } else {
+                PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
+            }
+        }
+    };
+    private static final Long TIMER_LONG = 25000L;
     private static final Long TIMER_TICK = 1000L;
+    private static final Long TIMER_END = 5000L;
     private Boolean isConnected = false;
 
     private BroadcastManager broadcastManager;
@@ -207,29 +234,33 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
             case BroadcastManager.CONECTANDO_DISPOSITIVO:
                 txtStatus.setText(R.string.Conectando_Dispositivo);
                 imgLector.setVisibility(View.GONE);
+                connect_Time.start();
                 break;
+            case BLUETHOOTH_DESCONECTADO:
+                if (PosInstance.getInstance().getDongle() != null) {
+                    PosInstance.getInstance().getDongle().closeCommunication();
+                    broadcastManager.btDisconnect();
+                    finishApp();
+                }
             default:
                 break;
         }
     }
 
-    @Override
-    public void onDeviceConnected() {
-//       firebaseAnalytics.logEvent(Event.EVENT_DONGLE_CONNECTED.key, null);
-        txtStatus.setText(R.string.Dispositivo_Conectado);
-        imgLector.setVisibility(View.GONE);
-        //TODO Verificar la actualizacion de Firmware
-//        if(!MposApplication.getInstance().getConfigManager().getQposFirmware().equals(MposApplication.getInstance().getPreferedDongle().getQpos(PosInterface.Tipodongle.DSPREAD).getDevicePosInfo ().getFirmwareVersion())){
-//            cambiaDeActividad(UpdateFirmware.class);
-//        }else {
-        PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
-//        }
-
+    private void finishApp() {
+        PosInstance.getInstance().getDongle().closeCommunication();
+        finishAffinity();
+        restaurarEnLugarDeNada();
     }
 
     @Override
     public void ondevicedisconnected() {
 
+    }
+
+    @Override
+    public void onDeviceConnected() {
+        isConnected = true;
     }
 
     @Override
@@ -245,21 +276,13 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
 //        cambiaDeActividad(LoginPCIActivity.class);
     }
 
-//    @Override
-//    public void onRespuestaDongle(final PosResult result) {
-////        firebaseAnalytics.logEvent(Event.EVENT_DONGLE_CONNECT_ERROR.key, null);
-////        despliegaModal(true, false, "Dongle Error", result.getMessage(), new ModalFragment.CommonDialogFragmentCallBack() {
-//            @Override
-//            public void onAccept() {
-//                if ( MposApplication.getInstance().getPreferedDongle()!= null) {
-//                    MposApplication.getInstance().getPreferedDongle().closeCommunication();
-//                }
-//            }
-//        });
-//        binding.txtStatus.setText(getString(R.string.Seleccione_Conexion));
-//        binding.imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
-//        binding.imgLector.setVisibility(View.VISIBLE);
-//    }
+    public void restaurarEnLugarDeNada() {
+        Intent data = new Intent();
+        setResult(RESULT_CANCELED, data);
+        finishAffinity();
+        android.os.Process.killProcess(android.os.Process.myPid());
+        System.exit(0);
+    }
 
     @Override
     public void onRequestNoQposDetected() {
@@ -274,16 +297,6 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
         } else {
             return false;
         }
-    }
-
-    @Override
-    protected void onStop() {
-        try {
-            unregisterReceiver(broadcastManager);
-        } catch (Exception exe) {
-            LOGGER.throwing(TAG, 1, exe, exe.getMessage());
-        }
-        super.onStop();
     }
 
     private void alertBuilder(final boolean esDeError, final String cabecera, final String cuerpo) {
@@ -344,28 +357,6 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
     }
 
     private void startTimer() {
-        connect_Time = new CountDownTimer(TIMER_LONG, TIMER_TICK) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                if (isConnected) {
-                    txtStatus.setText(R.string.Dispositivo_Conectado);
-                    imgLector.setVisibility(View.GONE);
-                    PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
-                    connect_Time.cancel();
-                }
-            }
-
-            @Override
-            public void onFinish() {
-                if (!isConnected) {
-                    imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
-                    txtStatus.setText(R.string.Dispositivo_NoEncontrado);
-                    btnSearch.setEnabled(true);
-                    PosInstance.getInstance().getDongle().closeCommunication();
-                }
-            }
-        };
-
         connect_Time.start();
     }
 }

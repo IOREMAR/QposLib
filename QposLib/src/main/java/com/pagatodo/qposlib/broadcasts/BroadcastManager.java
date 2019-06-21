@@ -93,7 +93,7 @@ public class BroadcastManager extends BroadcastReceiver {
                 break;
 
             case BluetoothDevice.ACTION_ACL_CONNECTED:
-                //NONE
+                activityCallback.onRecive(BroadcastManager.CONECTANDO_DISPOSITIVO);
                 break;
 
             case BluetoothDevice.ACTION_ACL_DISCONNECTED:
@@ -207,5 +207,12 @@ public class BroadcastManager extends BroadcastReceiver {
 
     }
 
-
+    public void btDisconnect(){
+        try {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            bluetoothAdapter.disable();
+        }catch ( Throwable exe   ){
+            LOGGER.throwing(TAG,1,exe,exe.getCause().toString());
+        }
+    }
 }
