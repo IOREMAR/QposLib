@@ -46,10 +46,27 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
     private static final int BLUETHOOTH_DEVICES = 11;
     public static final int QPOS_VENDOR_ID = 0x03EB;
 
+    private static final Long TIMER_LONG = 25000L;
+    private static final Long TIMER_TICK = 1000L;
+    private static final Long TIMER_END = 5000L;
+    private Boolean isConnected = false;
+
+    private BroadcastManager broadcastManager;
+    private GifView imgLector;
+    private TextView txtStatus;
+    private View headerLayout;
+    private Button btnSearch;
+
     private static final String TAG = ConexionPosActivity.class.getSimpleName();
+    private static final String REDIRECT_TO_ACTIVITY = "com.pagatodo.qposlib.dongleconect.redirect";
 
     protected static final int RC_HANDLE_INTERNET_PERM = 1;
     protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
+
+    enum RedirectionClasses {
+        Home
+    }
+
     private CountDownTimer connect_Time = new CountDownTimer(TIMER_LONG, TIMER_END) {
         @Override
         public void onTick(long millisUntilFinished) {
@@ -58,8 +75,10 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
                 txtStatus.setText(R.string.Dispositivo_Conectado);
                 imgLector.setVisibility(View.GONE);
                 PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
-                connect_Time.cancel();
+            } else {
+                changeToHomeActivityResponse();
             }
+            connect_Time.cancel();
         }
 
         @Override
@@ -76,16 +95,13 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
             }
         }
     };
-    private static final Long TIMER_LONG = 25000L;
-    private static final Long TIMER_TICK = 1000L;
-    private static final Long TIMER_END = 5000L;
-    private Boolean isConnected = false;
 
-    private BroadcastManager broadcastManager;
-    private GifView imgLector;
-    private TextView txtStatus;
-    private View headerLayout;
-    private Button btnSearch;
+    private void changeToHomeActivityResponse() {
+        Intent data = new Intent();
+        data.putExtra(REDIRECT_TO_ACTIVITY, RedirectionClasses.Home);
+        setResult(RESULT_OK, data);
+        finish();
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
