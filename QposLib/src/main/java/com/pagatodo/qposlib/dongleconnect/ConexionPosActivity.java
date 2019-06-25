@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
@@ -45,7 +47,36 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
     private static final int BLUETHOOTH_REQUEST = 10;
     private static final int BLUETHOOTH_DEVICES = 11;
     public static final int QPOS_VENDOR_ID = 0x03EB;
+    private static final String  COLOR_TEMA =  PosInstance.getInstance().getColorTema();
+    private static final String TAG = ConexionPosActivity.class.getSimpleName();
 
+    protected static final int RC_HANDLE_INTERNET_PERM = 1;
+    protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
+    private CountDownTimer connect_Time = new CountDownTimer(TIMER_LONG, TIMER_END) {
+        @Override
+        public void onTick(long millisUntilFinished) {
+            if (isConnected) {
+//                firebaseAnalytics.logEvent(Event.EVENT_DONGLE_CONNECTED.key, null);
+                txtStatus.setText(R.string.Dispositivo_Conectado);
+                imgLector.setVisibility(View.GONE);
+                PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
+                connect_Time.cancel();
+            }
+        }
+
+        @Override
+        public void onFinish() {
+            if (!isConnected) {
+                imgLector.setGifResource(COLOR_TEMA.equals("AZUL") ? R.raw.totem_not_found_blue  : R.raw.totem_not_found_red );
+                txtStatus.setText(R.string.Dispositivo_NoEncontrado);
+                btnSearch.setEnabled(true);
+                PosInstance.getInstance().getDongle().closeCommunication();
+                broadcastManager.btDisconnect();
+            } else {
+                PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
+            }
+        }
+    };
     private static final Long TIMER_LONG = 25000L;
     private static final Long TIMER_TICK = 1000L;
     private static final Long TIMER_END = 5000L;
@@ -57,56 +88,15 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
     private View headerLayout;
     private Button btnSearch;
 
-    private static final String TAG = ConexionPosActivity.class.getSimpleName();
-    private static final String REDIRECT_TO_ACTIVITY = "com.pagatodo.qposlib.dongleconect.redirect";
-
-    protected static final int RC_HANDLE_INTERNET_PERM = 1;
-    protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
-
-    enum RedirectionClasses {
-        Home
-    }
-
-    private CountDownTimer connect_Time = new CountDownTimer(TIMER_LONG, TIMER_END) {
-        @Override
-        public void onTick(long millisUntilFinished) {
-            if (isConnected) {
-//                firebaseAnalytics.logEvent(Event.EVENT_DONGLE_CONNECTED.key, null);
-                txtStatus.setText(R.string.Dispositivo_Conectado);
-                imgLector.setVisibility(View.GONE);
-                PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
-            } else {
-                changeToHomeActivityResponse();
-            }
-            connect_Time.cancel();
-        }
-
-        @Override
-        public void onFinish() {
-            if (!isConnected) {
-                imgLector.setGifResource(getAttributeReference(R.attr.conectar_totem_gif));
-                txtStatus.setText(R.string.Dispositivo_NoEncontrado);
-                btnSearch.setEnabled(true);
-                PosInstance.getInstance().getDongle().closeCommunication();
-
-                broadcastManager.btDisconnect();
-            } else {
-                PosInstance.getInstance().getDongle().getSessionKeys(NAME_RSA_PCI, PosInstance.getInstance().getAppContext());
-            }
-        }
-    };
-
-    private void changeToHomeActivityResponse() {
-        Intent data = new Intent();
-        data.putExtra(REDIRECT_TO_ACTIVITY, RedirectionClasses.Home);
-        setResult(RESULT_OK, data);
-        finish();
-    }
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_qpos);
+        if(COLOR_TEMA.equals(PosInstance.AZUL)){
+            setTheme(R.style.AppThemeBlue);
+        }else if(COLOR_TEMA.equals(PosInstance.ROJO)) {
+            setTheme(R.style.AppThemeRed);
+        }
         initUi();
     }
 
@@ -115,7 +105,8 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
         broadcastManager = new BroadcastManager(this, this);
         broadcastManager.setDongleListener(this);
         imgLector = findViewById(R.id.img_lector);
-        imgLector.setGifResource(R.drawable.conectar_totem_blue);
+
+        imgLector.setGifResource ( COLOR_TEMA.equals("AZUL") ? R.raw.conectar_totem_blue : R.raw.conectar_totem_red );
         txtStatus = findViewById(R.id.txt_status);
         headerLayout = findViewById(R.id.header_qpos_activity);
         btnSearch = findViewById(R.id.btn_search);
@@ -132,12 +123,6 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
         if (checkUSBConnected()) {
             onCheckForUsbDevices();
         }
-    }
-
-    private int getAttributeReference(final int attribute) {
-        final TypedValue typedValue = new TypedValue();
-        getTheme().resolveAttribute(attribute, typedValue, true);
-        return typedValue.resourceId;
     }
 
     private void setReceivers() {
@@ -181,7 +166,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
             onSuccessBluethoothPermissions();
         } else if (requestCode == BLUETHOOTH_DEVICES && data != null) {
 
-            imgLector.setGifResource(getAttributeReference(R.attr.totem_connecting_gif));
+
             final BluetoothDevice device = data.getParcelableExtra(ListaDispositivos.EXTRA_DEVICE);
 
             if (device != null) {
@@ -191,7 +176,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
                 ///
                 final AbstractDongle qpos = new DSpreadDevicePosFactory().getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this);
                 PosInstance.getInstance().setDongle(qpos);
-//                imgLector.setGifResource(getAttributeReference(R.drawable.totem_connecting_gif));
+                imgLector.setGifResource(COLOR_TEMA.equals("AZUL") ? R.raw.totem_connecting_blue : R.raw.totem_connecting_red );
                 broadcastManager.realizarConexion(qpos);
                 startTimer();
             } else {

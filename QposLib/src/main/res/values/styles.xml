@@ -7,6 +7,21 @@
         <item name="android:windowContentTransitions">true</item>
     </style>
 
+
+    <style name="DrawerHamburgerStyle" parent="@style/Widget.AppCompat.DrawerArrowToggle">
+        <item name="spinBars">true</item>
+        <item name="color">@android:color/white</item>
+    </style>
+
+
+
+    <style name="PickerStyle">
+        <item name="android:editTextColor">@color/colorAzulLetra</item>
+    </style>
+
+    <!-- Cambio de color al Tema Proncipal -->
+
+
     <style name="AppThemeBlue" parent="AppTheme">
 
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -19,14 +34,13 @@
         <item name="accent">@color/colorAccent</item>
         <item name="defaultButtonBackGround">@color/colorPrimaryDark</item>
         <item name="defaultButtonBackGroundPress">@color/colorPrimary</item>
+        <item name="totem_not_found_gif">@raw/totem_not_found_blue</item>
+        <item name="totem_connecting_gif">@raw/totem_connecting_blue</item>
+        <item name="conectar_totem_gif">@raw/conectar_totem_blue</item>
+        <item name="fullcarga">@drawable/logo</item>
+        <item name="fullcarga_flat">@drawable/ic_img_yaganaste_blue</item>
 
-        <item name="drawerArrowStyle">@style/DrawerHamburgerStyle</item>
 
-    </style>
-
-    <style name="DrawerHamburgerStyle" parent="@style/Widget.AppCompat.DrawerArrowToggle">
-        <item name="spinBars">true</item>
-        <item name="color">@android:color/white</item>
     </style>
 
     <style name="AppThemeRed" parent="AppTheme">
@@ -41,13 +55,18 @@
         <item name="accent">@color/colorDefaultButtonBackGround</item>
         <item name="defaultButtonBackGround">@color/colorDefaultButtonBackGround</item>
         <item name="defaultButtonBackGroundPress">@color/colorDefaultButtonBackGroundPress</item>
-
+        <item name="totem_not_found_gif">@raw/totem_not_found_red</item>
+        <item name="totem_connecting_gif">@raw/totem_connecting_red</item>
+        <item name="conectar_totem_gif">@raw/conectar_totem_red</item>
+        <item name="fullcarga">@drawable/ic_logo_negro</item>
+        <item name="fullcarga_flat">@drawable/ic_logo_vertical</item>
 
     </style>
 
-    <style name="PickerStyle">
-        <item name="android:editTextColor">@color/colorAzulLetra</item>
-    </style>
+
+
+
+
 
 
     <!-- Cold screen fix ends-->
@@ -87,7 +106,7 @@
 
     <style name="Estilo_Texto_Pos" parent="@android:style/Widget.TextView">
         <item name="android:textSize">@dimen/tamano_texto_standar</item>
-        <item name="android:textColor">@color/colorStrongRed</item>
+        <item name="android:textColor">?attr/primaryDark</item>
     </style>
 
 

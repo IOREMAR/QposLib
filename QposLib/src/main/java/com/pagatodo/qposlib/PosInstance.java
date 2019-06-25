@@ -9,12 +9,24 @@ import java.util.Hashtable;
 public class PosInstance {
 
     private static PosInstance instance;
+    public static String AZUL = "AZUL";
+    public static String  ROJO = "ROJO";
 
     private AbstractDongle Dongle;
 
     private Context AppContext;
 
     private Hashtable<String, String> sessionKeys;
+
+    private String ColorTema ;
+
+    public String getColorTema() {
+        return ColorTema;
+    }
+
+    public void setColorTema(String colorTema) {
+        ColorTema = colorTema;
+    }
 
     public static PosInstance getInstance() {
         synchronized (PosInstance.class) {

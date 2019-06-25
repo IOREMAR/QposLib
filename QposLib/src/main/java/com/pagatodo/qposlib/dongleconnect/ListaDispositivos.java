@@ -11,12 +11,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.pagatodo.qposlib.PosInstance;
 import com.pagatodo.qposlib.R;
 
 
-import java.util.Collections;
+
 import java.util.LinkedHashMap;
-import java.util.List;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -30,6 +31,12 @@ public class ListaDispositivos extends Activity { //NOSONAR
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if( PosInstance.getInstance().getColorTema().equals(PosInstance.AZUL)){
+            setTheme(R.style.AppThemeBlue);
+        }else if(PosInstance.getInstance().getColorTema().equals(PosInstance.ROJO)) {
+            setTheme(R.style.AppThemeRed);
+        }
 
         setContentView(R.layout.device_list);
         iniciaUI();

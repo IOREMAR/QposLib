@@ -29,7 +29,7 @@ android:background="@color/colorWhite">
                 app:layout_constraintEnd_toEndOf="@id/header_qpos_activity"
                 app:layout_constraintTop_toTopOf="@+id/header_qpos_activity"
                 app:layout_constraintBottom_toBottomOf="@id/header_qpos_activity"
-                android:src="@drawable/yaganaste"/>
+                android:src="?attr/fullcarga_flat"/>
 
 
 
@@ -37,6 +37,7 @@ android:background="@color/colorWhite">
 
 
 <TextView
+    android:gravity="center_horizontal"
     android:id="@+id/txt_status"
     style="@style/Estilo_Texto_Pos"
     android:layout_width="match_parent"
@@ -54,6 +55,7 @@ android:background="@color/colorWhite">
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:contentDescription="@null"
+    app:gif="?attr/totem_connecting_gif"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -61,7 +63,9 @@ android:background="@color/colorWhite">
 
 <com.pagatodo.qposlib.BotonClickUnico
     android:id="@+id/btn_search"
+    android:background="?attr/primaryDark"
     android:layout_width="wrap_content"
+    android:textColor="@color/colorWhite"
     android:layout_height = "wrap_content"
     android:layout_marginBottom="@dimen/margen_mediano"
     android:text="@string/bluetooth_select_device"
