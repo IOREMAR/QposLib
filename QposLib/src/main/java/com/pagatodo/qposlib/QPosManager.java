@@ -488,7 +488,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (!isSetRSA) {
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Clave RSA No Cargada", false));
         } else {
-            mPosService.getQposId();
+            mPosService.generateSessionKeys();
         }
     }
 
