@@ -697,7 +697,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestQposConnected() {
         mQStatePOS.updateState(POSConnectionState.STATE_POS.CONNECTED);
-        mPosService.getQposInfo();
         mPosService.getQposId();
     }
 
