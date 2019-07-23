@@ -5,6 +5,7 @@ import android.content.Context;
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
 
+import java.util.Hashtable;
 import java.util.Map;
 
 public interface PosInterface {
@@ -32,6 +33,8 @@ public interface PosInterface {
     DspreadDevicePOS getDeviePos();
 
     void deviceCancel();
+
+    Hashtable<String, String> getQposIdHash();
 
     int updateFirmware(final byte[] dataToUpdate, final String file);
 
