@@ -422,6 +422,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onQposIdResult(Hashtable<String, String> hashtable) {
         mQposIdHash = hashtable;
+        mPosService.getQposInfo();
         mPosService.generateSessionKeys();
     }
 
