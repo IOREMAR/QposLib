@@ -423,7 +423,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onQposIdResult(Hashtable<String, String> hashtable) {
         mQposIdHash = hashtable;
         mPosService.getQposInfo();
-        mPosService.generateSessionKeys();
     }
 
     @Override
@@ -459,7 +458,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mQPosDeviceInfo.setIsUsbConnected(posInfoData.get("isUsbConnected"));
 
         dongleConnect.onDeviceConnected();
-//        mPosService.generateSessionKeys();
+        mPosService.generateSessionKeys();
     }
 
     @Override
