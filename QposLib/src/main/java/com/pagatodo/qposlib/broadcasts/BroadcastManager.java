@@ -13,12 +13,8 @@ import android.hardware.usb.UsbManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 
-import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.PosInstance;
-import com.pagatodo.qposlib.R;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
-
-
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.PosInterface;
 import com.pagatodo.qposlib.pos.dspread.DSpreadDevicePosFactory;
@@ -26,10 +22,9 @@ import com.pagatodo.qposlib.pos.dspread.DSpreadDevicePosFactory;
 import static com.pagatodo.qposlib.Logger.LOGGER;
 import static com.pagatodo.qposlib.dongleconnect.ConexionPosActivity.QPOS_VENDOR_ID;
 
-
 public class BroadcastManager extends BroadcastReceiver {
 
-    private static  final String BLUETOOTH_CLASSDONGLE_GENERIC = "40424";
+    private static final String BLUETOOTH_CLASSDONGLE_GENERIC = "40424";
     private BroadcastListener activityCallback;
     private Activity activityCaller;
     private DongleConnect dongleListener;
@@ -61,7 +56,6 @@ public class BroadcastManager extends BroadcastReceiver {
         activityCallback = activityListener;
     }
     // SpecificBluethooth
-
 
     public DongleConnect getDongleListener() {
         return dongleListener;
@@ -101,7 +95,7 @@ public class BroadcastManager extends BroadcastReceiver {
 
                 //BLUETOOTH_CLASSDONGLE_GENERIC es una variable hexadecimal que utiliza la tecnologia Bluetooth para identificar
                 //diferentes tipos de Dispositivos y agruparlos en base a un codigo.
-                if(device.getBluetoothClass().toString().equals(BLUETOOTH_CLASSDONGLE_GENERIC) && device.getName().contains("MPOS")) {
+                if (device.getBluetoothClass().toString().equals(BLUETOOTH_CLASSDONGLE_GENERIC) && device.getName().contains("MPOS")) {
 
                     aclDisconnected();
                 }
@@ -115,15 +109,13 @@ public class BroadcastManager extends BroadcastReceiver {
 
     private void aclDisconnected() {
         // ImplPOs
-        if (PosInstance.getInstance().getDongle()!= null) {
-            if (!getCommunication(BLUETOOTH_DEVICE)) {
-                return;
-            }
+        if (PosInstance.getInstance().getDongle() != null) {
+            PosInstance.getInstance().getDongle().closeCommunication();
 //            dongleListener.ondevicedisconnected();
             activityCallback.onRecive(BLUETHOOTH_DESCONECTADO);
         }
 
-        LOGGER.throwing(TAG, 1, new Throwable("Bluetooth STATE_OFF"),"Bluetooth STATE_OFF");
+        LOGGER.throwing(TAG, 1, new Throwable("Bluetooth STATE_OFF"), "Bluetooth STATE_OFF");
     }
 
     private void bluetoothChange(@NonNull final Intent intent) {
@@ -133,7 +125,7 @@ public class BroadcastManager extends BroadcastReceiver {
             if (qpos != null) {
                 qpos.closeCommunication();
             }
-            LOGGER.throwing(TAG, 1,new Throwable("Bluetooth STATE_OFF")  ,"Bluetooth STATE_OFF");
+            LOGGER.throwing(TAG, 1, new Throwable("Bluetooth STATE_OFF"), "Bluetooth STATE_OFF");
         }
     }
 
@@ -141,16 +133,13 @@ public class BroadcastManager extends BroadcastReceiver {
         synchronized (this) {
             activityCallback.onRecive(USB_CONECTADO);
         }
-
     }
 
     private void usbDeviceDisconnect(final Intent extraIntent) {
 
         final UsbDevice device = extraIntent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
         if (device.getVendorId() == QPOS_VENDOR_ID && PosInstance.getInstance().getDongle() != null) {
-            if (!getCommunication(USB_DEVICE)) {
-                return;
-            }
+            PosInstance.getInstance().getDongle().closeCommunication();
             dongleListener.ondevicedisconnected();
         }
     }
@@ -172,7 +161,6 @@ public class BroadcastManager extends BroadcastReceiver {
         }
     }
 
-
     public void validateBluethoothPermisiion() {
         final int rcBluethooth = ActivityCompat.checkSelfPermission(activityCaller, Manifest.permission.BLUETOOTH);
         if (rcBluethooth == PackageManager.PERMISSION_GRANTED) {
@@ -181,7 +169,6 @@ public class BroadcastManager extends BroadcastReceiver {
             requestBluethoothPermissions();
         }
     }
-
 
     private void requestBluethoothPermissions() {
         final String[] permissions = new String[]{Manifest.permission.BLUETOOTH};
@@ -198,21 +185,12 @@ public class BroadcastManager extends BroadcastReceiver {
         }
     }
 
-    private boolean getCommunication(final String deviceConnected) {
-        final AbstractDongle dongle = PosInstance.getInstance().getDongle().getQpos(PosInterface.Tipodongle.DSPREAD);
-        if (deviceConnected.equals(USB_DEVICE) && dongle.getDeviePos().getCommunicationMode().equals(QPOSService.CommunicationMode.USB_OTG_CDC_ACM)) {
-            return true;
-        }
-        return deviceConnected.equals(BLUETOOTH_DEVICE) && (dongle.getDeviePos().getCommunicationMode().equals(QPOSService.CommunicationMode.BLUETOOTH) || dongle.getDeviePos().getCommunicationMode().equals(QPOSService.CommunicationMode.BLUETOOTH_BLE));
-
-    }
-
-    public void btDisconnect(){
+    public void btDisconnect() {
         try {
             BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             bluetoothAdapter.disable();
-        }catch ( Throwable exe   ){
-            LOGGER.throwing(TAG,1,exe,exe.getCause().toString());
+        } catch (Throwable exe) {
+            LOGGER.throwing(TAG, 1, exe, exe.getCause().toString());
         }
     }
 }
