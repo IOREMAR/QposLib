@@ -119,9 +119,10 @@ public class BroadcastManager extends BroadcastReceiver {
             if (!getCommunication(BLUETOOTH_DEVICE)) {
                 return;
             }
-            dongleListener.ondevicedisconnected();
+//            dongleListener.ondevicedisconnected();
+            activityCallback.onRecive(BLUETHOOTH_DESCONECTADO);
         }
-        activityCallback.onRecive(BLUETHOOTH_DESCONECTADO);
+
         LOGGER.throwing(TAG, 1, new Throwable("Bluetooth STATE_OFF"),"Bluetooth STATE_OFF");
     }
 
@@ -151,7 +152,6 @@ public class BroadcastManager extends BroadcastReceiver {
                 return;
             }
             dongleListener.ondevicedisconnected();
-
         }
     }
 
