@@ -458,7 +458,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mQPosDeviceInfo.setIsUsbConnected(posInfoData.get("isUsbConnected"));
 
         dongleConnect.onDeviceConnected();
-        mPosService.generateSessionKeys();
     }
 
     @Override
