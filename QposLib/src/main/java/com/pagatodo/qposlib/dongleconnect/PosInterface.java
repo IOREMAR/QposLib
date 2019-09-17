@@ -40,7 +40,10 @@ public interface PosInterface {
 
     int getUpdateProgress();
 
+
     QPOSDeviceInfo getDevicePosInfo();
+
+    byte[] onEncryptData(final byte[] bytes, final PosInterface.EncrypType type);
 
     /**
      * Tipo de Dispositivo
@@ -49,6 +52,12 @@ public interface PosInterface {
         DSPREAD,
         NODSPREAD,
         SUNMI
+    }
+
+    enum EncrypType {
+        TAGENCRYPT,
+        ICCENCRYPT,
+        PINENCRYPT
     }
 
 //    void doMifareCard(MifareCommand mifareCommand, int timeout);

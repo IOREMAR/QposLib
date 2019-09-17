@@ -13,8 +13,8 @@ import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
+import com.pagatodo.qposlib.dongleconnect.PosInterface;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
-import com.pagatodo.qposlib.pos.ICCDecodeData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
 import com.pagatodo.qposlib.pos.PosResult;
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
@@ -67,10 +67,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private QPOSDeviceInfo mQPosDeviceInfo;
     private QposServiceListener mQposServiceCallback;
     private QPOSService.DoTradeResult mCurrentTradeResult;
-    private Hashtable<String, String> mDecodeData;
+    private Hashtable<String, String> decodeData;
     private ArrayList<String> mListCapabilities;
-    private Map<String, String> mEmvTags = new ArrayMap<>();
-    private Hashtable<String, String> mQposIdHash;
+    private Map<String, String> emvTags = new ArrayMap<>();
 
     public interface QposServiceListener {
         void onQposIdResult(Hashtable<String, String> hashtable);
@@ -99,11 +98,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mQStatePOS.updateState(POSConnectionState.STATE_POS.NONE);
         this.mDevicePos = dongleDevice;
         this.setQposDspread(this);
-    }
-
-    @Override
-    public Hashtable<String, String> getQposIdHash() {
-        return mQposIdHash;
     }
 
     public void setQposServiceListener(QposServiceListener qposServiceCallback) {
@@ -305,7 +299,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public Map<String, String> getIccTags() {
-        return mEmvTags;
+        return emvTags;
     }
 
     @Override
@@ -319,6 +313,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     public QPOSDeviceInfo getDevicePosInfo() {
         return mQPosDeviceInfo;
+    }
+
+    @Override
+    public byte[] onEncryptData(byte[] bytes, EncrypType type) {
+        return bytes;
     }
 
     public void generateSessionKeys() {
@@ -421,8 +420,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onQposIdResult(Hashtable<String, String> hashtable) {
-        mQposIdHash = hashtable;
-        mPosService.getQposInfo();
+
+        mPosService.generateSessionKeys();
     }
 
     @Override
@@ -458,6 +457,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mQPosDeviceInfo.setIsUsbConnected(posInfoData.get("isUsbConnected"));
 
         dongleConnect.onDeviceConnected();
+//        mPosService.generateSessionKeys();
     }
 
     @Override
@@ -487,7 +487,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (!isSetRSA) {
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Clave RSA No Cargada", false));
         } else {
-            mPosService.generateSessionKeys();
+            mPosService.getQposId();
         }
     }
 
@@ -517,7 +517,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onDoTradeResult(QPOSService.DoTradeResult doTradeResult, Hashtable<String, String> hashtable) {
-        mEmvTags.clear();
+        emvTags.clear();
         mCurrentTradeResult = doTradeResult;
         Log.i(TAG, mCurrentTradeResult.name());
         Log.i(TAG, doTradeResult.name());
@@ -526,7 +526,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (doTradeResult != QPOSService.DoTradeResult.MCR && doTradeResult != QPOSService.DoTradeResult.ICC) {
             onFailTradeResult(doTradeResult);
         } else {
-            mEmvTags = reciverEMVTags();
+            emvTags = reciverEMVTags();
             if (doTradeResult == QPOSService.DoTradeResult.MCR) {
                 dongleListener.onResultData(hashtable, DongleListener.DoTradeResult.MCR);
             } else {
@@ -644,15 +644,20 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public Hashtable<String, String> getQposIdHash() {
+        return null;
+    }
+
+    @Override
     public void onRequestOnlineProcess(String tlvString) {
         Log.i(TAG, tlvString);
-        mDecodeData = mPosService.anlysEmvIccData(tlvString);
-        mDecodeData.put(ICCDecodeData.TLV.getLabel(), tlvString);
+        decodeData = mPosService.anlysEmvIccData(tlvString);
+        decodeData.put("tlv", tlvString);
         //TODO Tiempo De Preguntar Los TAGS Al Dongle
 //        CamposEMVData.getInstance().reciverEMVTags();
         final String iccTag = "9F33: ".concat(mPosService.getICCTag(0, 1, "9F33").toString());
         Log.v(TAG, iccTag);
-        dongleListener.onResultData(mDecodeData, DongleListener.DoTradeResult.ICC);
+        dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.ICC);
     }
 
     @Override
@@ -696,7 +701,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestQposConnected() {
         mQStatePOS.updateState(POSConnectionState.STATE_POS.CONNECTED);
-        mPosService.getQposId();
+        mPosService.getQposInfo();
     }
 
     @Override
@@ -719,7 +724,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onError(QPOSService.Error error) {
         this.cancelOperacion();
-        if (mDecodeData != null) {
+        if (decodeData != null) {
             mPosService.resetQPOS();
 
             switch (error) {
@@ -739,7 +744,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     // NONE
                     break;
                 case DEVICE_RESET:
-                    if (transactionAmountData == null && mDecodeData != null) {
+                    if (transactionAmountData == null && decodeData != null) {
                         dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
                     }
                     break;

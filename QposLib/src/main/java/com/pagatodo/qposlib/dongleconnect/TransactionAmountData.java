@@ -4,6 +4,7 @@ import android.util.ArrayMap;
 
 import com.dspread.xpos.QPOSService;
 
+import java.util.List;
 import java.util.Map;
 
 public class TransactionAmountData {
@@ -24,6 +25,7 @@ public class TransactionAmountData {
     private String comision;
     private String codigoPostal;
     private String AmountIcon;
+    private List<String> tags;
 
     public String getAmountIcon() {
         return AmountIcon;
@@ -167,5 +169,13 @@ public class TransactionAmountData {
 
     public void setCodigoPostal(final String codigoPostal) {
         this.codigoPostal = codigoPostal;
+    }
+
+    public void setSunmiCapacidades(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public List<String> getSunmiCapacidades() {
+        return tags;
     }
 }
