@@ -547,7 +547,10 @@ public class SunmiPosManager extends AbstractDongle {
 //            AppLogger.LOGGER.fine(TAG, "***************************************************************");
 //            AppLogger.LOGGER.fine(TAG, "****************************End Process************************");
 //            AppLogger.LOGGER.fine(TAG, "***************************************************************");
-            dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
+            if (code == -50020)
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "NIP Cancelado", false));
+            else
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
         }
 
         @Override
