@@ -526,7 +526,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (doTradeResult != QPOSService.DoTradeResult.MCR && doTradeResult != QPOSService.DoTradeResult.ICC) {
             onFailTradeResult(doTradeResult);
         } else {
-            mEmvTags = reciverEMVTags();
             if (doTradeResult == QPOSService.DoTradeResult.MCR) {
                 dongleListener.onResultData(hashtable, DongleListener.DoTradeResult.MCR);
             } else {
@@ -646,6 +645,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestOnlineProcess(String tlvString) {
         Log.i(TAG, tlvString);
+        mEmvTags = reciverEMVTags();
         mDecodeData = mPosService.anlysEmvIccData(tlvString);
         mDecodeData.put(ICCDecodeData.TLV.getLabel(), tlvString);
         //TODO Tiempo De Preguntar Los TAGS Al Dongle
