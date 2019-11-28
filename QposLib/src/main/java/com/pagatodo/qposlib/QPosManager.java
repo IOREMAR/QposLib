@@ -1099,7 +1099,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
 
         final Integer emvLength = Integer.valueOf(TAGSEMV.length);
+        Map<String,String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
+        if(tags.get("tlv").isEmpty())
+        {
+            tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
+        }
+        
         //TODO Usar Libreria De Qpos
-        return mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
+        return tags;
     }
 }
