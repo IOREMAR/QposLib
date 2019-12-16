@@ -7,6 +7,8 @@ import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.TextUtils;
+import android.util.ArrayMap;
+
 import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
@@ -34,6 +36,7 @@ import com.sunmi.pay.hardware.aidlv2.readcard.CheckCardCallbackV2;
 import com.sunmi.pay.hardware.aidlv2.readcard.ReadCardOptV2;
 import com.sunmi.pay.hardware.aidlv2.security.SecurityOptV2;
 import com.sunmi.pay.hardware.aidlv2.system.BasicOptV2;
+
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,8 +45,11 @@ import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import sunmi.paylib.SunmiPayKernel;
+
 import org.apache.commons.lang3.ArrayUtils;
+
 import static com.pagatodo.qposlib.QPosManager.ADITIONAL_CAPS;
 import static com.pagatodo.qposlib.QPosManager.COUNTRY_CODE;
 import static com.pagatodo.qposlib.QPosManager.CURRENCY_CODE;
@@ -61,14 +67,14 @@ public class SunmiPosManager extends AbstractDongle {
     public static PinPadOptV2 mPinPadOptV2;
     public static SecurityOptV2 mSecurityOptV2;
     public static EMVOptV2 mEMVOptV2;
-    private static final  String [] TAGSEMV = new String  [] {"5f2a", "82", "95", "9a", "9c", "9f02", "9f03", "9f10", "9f1a", "9f26", "9f27", "9f33", "9f34", "9f35", "9f36", "9f37", "9f40", "5a", "5f34", "57", "9f07", "5f28", "56", "84", "9f09", "9f41", "9f53", "5f20", "5", "9f1e", "9f12"};
-
+    private static final String[] TAGSEMV = new String[]{"5f2a", "82", "95", "9a", "9c", "9f02", "9f03", "9f10", "9f1a", "9f26", "9f27", "9f33", "9f34", "9f35", "9f36", "9f37", "9f40", "5a", "5f34", "57", "9f07", "5f28", "56", "84", "9f09", "9f41", "9f53", "5f20", "5", "9f1e", "9f12"};
+    private Map<String, String> emvTags = new ArrayMap<>();
     private Map<String, String> configMap;
     private int mCardType;  // card type
     private String mCardNo = "";
-    private byte [] hexStrPin ;
+    private byte[] hexStrPin;
     private String amount;
-    private int mAppSelect ;
+    private int mAppSelect;
     private int mPinType;   // 0-online pin, 1-offline pin
 
     private String track1 = "";
@@ -182,7 +188,7 @@ public class SunmiPosManager extends AbstractDongle {
         }
     }
 
-      private Hashtable<String, String> getDataOpTarjeta(final Map<String, TLV> mapTAGS ) { //NOSONAR
+    private Hashtable<String, String> getDataOpTarjeta(final Map<String, TLV> mapTAGS) { //NOSONAR
         Hashtable<String, String> resultData = new Hashtable<>();
         resultData.put("maskedPAN", mapTAGS.containsKey(ICCDecodeData.ENC_PAN.getLabel()) ? mapTAGS.get(ICCDecodeData.ENC_PAN.getLabel()).getValue() : "");
         resultData.put("encTrack1", mapTAGS.containsKey(ICCDecodeData.ENC_TRACK_1.getLabel()) ? mapTAGS.get(ICCDecodeData.ENC_TRACK_1.getLabel()).getValue() : "");
@@ -191,22 +197,22 @@ public class SunmiPosManager extends AbstractDongle {
         resultData.put("cardholderName", mapTAGS.containsKey(ICCDecodeData.CARDHOLDER_NAME.getLabel()) ? mapTAGS.get(ICCDecodeData.CARDHOLDER_NAME.getLabel()).getValue() : "");
         resultData.put("iccdata", getHexEmvtags(mapTAGS));
         resultData.put("serviceCode", mapTAGS.containsKey(ICCDecodeData.SERVICE_CODE.getLabel()) ? mapTAGS.get(ICCDecodeData.ENC_PAN.getLabel()).getValue() : "");
-        resultData.put("pinBlock", hexStrPin !=null ? new String(hexStrPin) : "");
+        resultData.put("pinBlock", hexStrPin != null ? new String(hexStrPin) : "");
         if (mapTAGS.containsKey("57")) {
-            final int index =  mapTAGS.get("57").getValue().indexOf("D") + 1;
+            final int index = mapTAGS.get("57").getValue().indexOf("D") + 1;
             final int endIndex = index + 4;
             resultData.put("expiryDate", mapTAGS.get("57").getValue().substring(index, endIndex));
         }
         return resultData;
     }
 
-    private byte[] getTagEncrypt(final byte[] selectTAG , final int keyIndex) throws RemoteException {
+    private byte[] getTagEncrypt(final byte[] selectTAG, final int keyIndex) throws RemoteException {
         byte[] dataIn = createBytePadding(selectTAG);
         byte[] dataOut = new byte[dataIn.length];
-        int result =  mSecurityOptV2.dataEncrypt(keyIndex, dataIn, AidlConstantsV2.Security.DATA_MODE_ECB, null, dataOut);
+        int result = mSecurityOptV2.dataEncrypt(keyIndex, dataIn, AidlConstantsV2.Security.DATA_MODE_ECB, null, dataOut);
         if (result == 0) {
             return dataOut;
-        }else {
+        } else {
             return new byte[0];
         }
     }
@@ -216,41 +222,36 @@ public class SunmiPosManager extends AbstractDongle {
         mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue();
         track1 = mapTAGS.getString("TRACK1");
         track2 = mapTAGS.getString("TRACK2");
-        String track3 =  mapTAGS.getString("TRACK3") != null  ? mapTAGS.getString("TRACK3")  : "" ;
+        String track3 = mapTAGS.getString("TRACK3") != null ? mapTAGS.getString("TRACK3") : "";
         String value = "track1:" + track1 + "\ntrack2:" + track2 + "\ntrack3:" + track3;
 
         String inicioNombre = track1.substring(18);
-        String cardHolderName =  inicioNombre.substring(0,inicioNombre.indexOf("^"));
+        String cardHolderName = inicioNombre.substring(0, inicioNombre.indexOf("^"));
 
         String serviceCode = "";
-            if (track2 != null) {
-                int index = track2.indexOf("=");
-                if (index != -1) {
-                    mCardNo = track2.substring(0, index);
-                    serviceCode = track2.substring(index+5, index+8);
-                }
+        if (track2 != null) {
+            int index = track2.indexOf("=");
+            if (index != -1) {
+                mCardNo = track2.substring(0, index);
+                serviceCode = track2.substring(index + 5, index + 8);
             }
+        }
 
         Hashtable<String, String> resultData = new Hashtable<>();
 
-            resultData.put("maskedPAN", track1.substring(track1.indexOf('B')+1,track1.indexOf('^')));
-            resultData.put("encTrack1", "%".concat(track1).concat("?"));
-            resultData.put("encTrack2", ";".concat(track2).concat("?"));
-            resultData.put("encTrack3", track3);
-            resultData.put("cardholderName", cardHolderName);
-            resultData.put("serviceCode", serviceCode);
+        resultData.put("maskedPAN", track1.substring(track1.indexOf('B') + 1, track1.indexOf('^')));
+        resultData.put("encTrack1", "%".concat(track1).concat("?"));
+        resultData.put("encTrack2", ";".concat(track2).concat("?"));
+        resultData.put("encTrack3", track3);
+        resultData.put("cardholderName", cardHolderName);
+        resultData.put("serviceCode", serviceCode);
 //            resultData.put("iccdata", new ArrayList<Object>());
-            resultData.put("pinBlock", hexStrPin !=null ? new String(hexStrPin) : "");
+        resultData.put("pinBlock", hexStrPin != null ? new String(hexStrPin) : "");
 
-                resultData.put("expiryDate", inicioNombre.substring(inicioNombre.indexOf("^")).substring(1,5));
+        resultData.put("expiryDate", inicioNombre.substring(inicioNombre.indexOf("^")).substring(1, 5));
 
         return resultData;
     }
-
-
-
-
-
 
 
     @Override
@@ -282,16 +283,16 @@ public class SunmiPosManager extends AbstractDongle {
         limpiarVariables();
         initData(transactionAmountData.getCapacidades());
         this.transactionAmountData = transactionAmountData;
-        if(transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
+        if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
             checkCard();
-        }else{
+        } else {
             startProcessEmv(transactionAmountData.getAmount());
-      }
+        }
     }
 
     @Override
     public Map<String, String> getIccTags() {
-        return null;
+        return emvTags;
     }
 
     @Override
@@ -330,7 +331,6 @@ public class SunmiPosManager extends AbstractDongle {
     }
 
 
-
     public byte[] onPosTagEncrypt(byte[] bytes) {
         try {
             return getTagEncrypt(bytes, 10);
@@ -352,14 +352,12 @@ public class SunmiPosManager extends AbstractDongle {
 
     public byte[] onPosEncryptData(byte[] bytes) {
         try {
-            return getbyteEncrypt(createBytePadding(bytes), 10)  ;
+            return getbyteEncrypt(createBytePadding(bytes), 10);
         } catch (RemoteException e) {
             e.printStackTrace();
             return null;
         }
     }
-
-
 
 
     @Override
@@ -369,7 +367,7 @@ public class SunmiPosManager extends AbstractDongle {
 
     @Override
     public byte[] onEncryptData(byte[] bytes, EncrypType type) {
-        switch (type){
+        switch (type) {
             case TAGENCRYPT:
                 return onPosTagEncrypt(bytes);
             case ICCENCRYPT:
@@ -389,7 +387,7 @@ public class SunmiPosManager extends AbstractDongle {
             mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue();
             try {
                 dongleListener.onResultData(getDataOpTarjeta(bundle), DongleListener.DoTradeResult.MCR);
-            } catch (Exception e){
+            } catch (Exception e) {
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Error al leer", false));
             }
 
@@ -409,12 +407,13 @@ public class SunmiPosManager extends AbstractDongle {
             mCardType = AidlConstantsV2.CardType.IC.getValue();
 //            AppLogger.LOGGER.fine(TAG, "Lectura Chip");
 
-           if( transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)){
-               Map<String ,TLV> mapTAGS =   getTlvData();
-               dongleListener.onResultData(getDataOpTarjeta(mapTAGS), DongleListener.DoTradeResult.ICC);
-           }else {
-               transactProcess();
-           }
+            if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
+                Map<String, TLV> mapTAGS = getTlvData();
+                TagsTlvToTagsString(mapTAGS);
+                dongleListener.onResultData(getDataOpTarjeta(mapTAGS), DongleListener.DoTradeResult.ICC);
+            } else {
+                transactProcess();
+            }
         }
 
         @Override
@@ -428,7 +427,13 @@ public class SunmiPosManager extends AbstractDongle {
         }
     };
 
-    private EMVListenerV2 mEMVListener = new EMVListenerV2.Stub()  {
+    private void TagsTlvToTagsString(Map<String, TLV> mapTAGS) {//tagsEMV
+        for (Map.Entry<String, TLV> entry : mapTAGS.entrySet()) {
+            emvTags.put(entry.getKey(), entry.getValue().getValue());
+        }
+    }
+
+    private EMVListenerV2 mEMVListener = new EMVListenerV2.Stub() {
         @Override
         public void onWaitAppSelect(List<EMVCandidateV2> list, boolean b) throws RemoteException {
             List<String> candidateNames = getCandidateNames(list);
@@ -437,8 +442,7 @@ public class SunmiPosManager extends AbstractDongle {
                 public void seleccionAppEmv(final int position) {
                     try {
                         mEMVOptV2.importAppSelect(position);
-                    }
-                    catch ( RemoteException exe ){
+                    } catch (RemoteException exe) {
 //                        AppLogger.LOGGER.throwing(TAG,1,exe,exe.getMessage());
                         dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.SELECT_APP_FAIL, "Error al Seleccionar la Aplicación", false));
                     }
@@ -454,7 +458,7 @@ public class SunmiPosManager extends AbstractDongle {
                 boolean isVisa = appSelected.startsWith("A000000003");
                 boolean isMaster = appSelected.startsWith("A000000004");
                 boolean isUnion = appSelected.startsWith("A000000333");
-                if ( isVisa ) {
+                if (isVisa) {
                     // VISA(PayWave)
                     mAppSelect = 1;
                     // set PayWave tlv data
@@ -465,7 +469,7 @@ public class SunmiPosManager extends AbstractDongle {
                             "999999999999", "999999999999", "000000000000"
                     };
                     mEMVOptV2.setTlvList(AidlConstantsV2.EMV.TLVOpCode.OP_PAYWAVE, tagsPayWave, valuesPayWave);
-                } else if ( isMaster ) {
+                } else if (isMaster) {
                     // MasterCard(PayPass)
                     mAppSelect = 2;
                     // set PayPass tlv data
@@ -481,7 +485,7 @@ public class SunmiPosManager extends AbstractDongle {
                     };
                     mEMVOptV2.setTlvList(AidlConstantsV2.EMV.TLVOpCode.OP_PAYPASS, tagsPayPass, valuesPayPass);
                 } else if
-                ( isUnion ) {
+                (isUnion) {
                     mAppSelect = 0;
                     // UnionPay
 
@@ -532,8 +536,9 @@ public class SunmiPosManager extends AbstractDongle {
 
         @Override
         public void onOnlineProc() throws RemoteException {
-          Map<String ,TLV> mapTAGS =   getTlvData();
-          dongleListener.onResultData(getDataOpTarjeta(mapTAGS), DongleListener.DoTradeResult.ICC);
+            Map<String, TLV> mapTAGS = getTlvData();
+            TagsTlvToTagsString(mapTAGS);
+            dongleListener.onResultData(getDataOpTarjeta(mapTAGS), DongleListener.DoTradeResult.ICC);
         }
 
         @Override
@@ -578,9 +583,9 @@ public class SunmiPosManager extends AbstractDongle {
         }
     }
 
-    private String getHexEmvtags (final Map<String,TLV> mapTags ){
-        final StringBuilder Sbuilder =  new StringBuilder();
-        for (final String tag : mapTags.keySet() ){
+    private String getHexEmvtags(final Map<String, TLV> mapTags) {
+        final StringBuilder Sbuilder = new StringBuilder();
+        for (final String tag : mapTags.keySet()) {
             Sbuilder.append(mapTags.get(tag).recoverToHexStr());
         }
         return Sbuilder.toString();
@@ -599,13 +604,13 @@ public class SunmiPosManager extends AbstractDongle {
 //    }
 
 
-    private void limpiarVariables(){
-        mCardType = 0 ;  // card type
+    private void limpiarVariables() {
+        mCardType = 0;  // card type
         mCardNo = "";
         hexStrPin = null;
-        amount ="";
-        mAppSelect =0 ;
-        mPinType  = 2;   // 0-online pin, 1-offline pin
+        amount = "";
+        mAppSelect = 0;
+        mPinType = 2;   // 0-online pin, 1-offline pin
         track1 = "";
         track2 = "";
     }
@@ -616,8 +621,8 @@ public class SunmiPosManager extends AbstractDongle {
         if (input.length % 8 > 0) {
             len += 8 - (input.length % 8);
 
-            final byte[] ret = new byte[ len  ];
-            Arrays.fill(ret,(byte)0x00);
+            final byte[] ret = new byte[len];
+            Arrays.fill(ret, (byte) 0x00);
 
             System.arraycopy(input, 0, ret, 0, input.length);
 
@@ -628,19 +633,19 @@ public class SunmiPosManager extends AbstractDongle {
         }
     }
 
-    private byte[] getbyteEncrypt( final byte [] data ,final int keyIndex) throws RemoteException {
+    private byte[] getbyteEncrypt(final byte[] data, final int keyIndex) throws RemoteException {
 
         byte[] dataIn = data;
         byte[] dataOut = new byte[dataIn.length];
-        int result =  mSecurityOptV2.dataEncrypt(keyIndex, dataIn, AidlConstantsV2.Security.DATA_MODE_ECB, null, dataOut);
+        int result = mSecurityOptV2.dataEncrypt(keyIndex, dataIn, AidlConstantsV2.Security.DATA_MODE_ECB, null, dataOut);
         if (result == 0) {
-            return  dataOut;
+            return dataOut;
         }
 
         return new byte[0];
     }
 
-    private List <String>   getCandidateNames(List<EMVCandidateV2> candiList) {
+    private List<String> getCandidateNames(List<EMVCandidateV2> candiList) {
         List<String> appsName = new ArrayList<>();
         if (candiList == null || candiList.size() == 0)
             return Collections.EMPTY_LIST;
@@ -654,18 +659,18 @@ public class SunmiPosManager extends AbstractDongle {
             appsName.add(name);
 //            AppLogger.LOGGER.fine(TAG, name);
         }
-        return  appsName;
+        return appsName;
     }
 
-    private Map<String,TLV> getTlvData() {
+    private Map<String, TLV> getTlvData() {
         try {
 
             List<String> emvTags = transactionAmountData.getSunmiCapacidades();
             String[] tagList;
-            if(!emvTags.isEmpty()) {
+            if (!emvTags.isEmpty()) {
                 tagList = new String[emvTags.size()];
                 tagList = emvTags.toArray(tagList);
-            }else {
+            } else {
                 tagList = TAGSEMV;
             }
 
@@ -700,7 +705,7 @@ public class SunmiPosManager extends AbstractDongle {
 
     @Override
     public void operacionFinalizada(String ARPC) {
-        importOnlineProcessStatus(0 ,ARPC);
+        importOnlineProcessStatus(0, ARPC);
 
     }
 
@@ -732,15 +737,14 @@ public class SunmiPosManager extends AbstractDongle {
                 public void onConfirm(int i, byte[] pinBlock) {
 
                     try {
-                        if ( pinBlock != null ) {
+                        if (pinBlock != null) {
                             hexStrPin = pinBlock;
 //                            AppLogger.LOGGER.info(TAG, "onConfirm pin block:" + hexStrPin);
                             mEMVOptV2.importPinInputStatus(mPinType, 0);
                         } else {
                             mEMVOptV2.importPinInputStatus(mPinType, 2);
                         }
-                    }
-                    catch ( RemoteException exe ){
+                    } catch (RemoteException exe) {
 //                        AppLogger.LOGGER.throwing(TAG,1,exe ,exe.getMessage());
                         cancelOperacion();
                     }
@@ -753,8 +757,7 @@ public class SunmiPosManager extends AbstractDongle {
 //                        AppLogger.LOGGER.throwing(TAG, 1, new Throwable("onCancel"), "onPin Canceled");
                         mEMVOptV2.importPinInputStatus(mPinType, 1);
                         dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Error al Ingresar el PIN", false));
-                    }
-                    catch ( RemoteException exe ){
+                    } catch (RemoteException exe) {
 //                        AppLogger.LOGGER.throwing(TAG,1,exe ,exe.getMessage());
                         cancelOperacion();
                     }
@@ -767,8 +770,7 @@ public class SunmiPosManager extends AbstractDongle {
 //                        AppLogger.LOGGER.throwing(TAG, 1, new Throwable("Erro al Ingresar el PIN "), msg);
 
                         mEMVOptV2.importPinInputStatus(mPinType, 3);
-                    }
-                    catch ( RemoteException exe ){
+                    } catch (RemoteException exe) {
 //                        AppLogger.LOGGER.throwing(TAG,1,exe ,exe.getMessage());
                         cancelOperacion();
                     }
@@ -781,7 +783,7 @@ public class SunmiPosManager extends AbstractDongle {
         }
     }
 
-    private void importOnlineProcessStatus(final int status ,final String ARPC) {
+    private void importOnlineProcessStatus(final int status, final String ARPC) {
 //        AppLogger.LOGGER.fine(TAG, "importOnlineProcessStatus status:" + status    + "ARPC: " + ARPC );
         try {
             String[] tags = {
