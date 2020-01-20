@@ -552,7 +552,7 @@ public class SunmiPosManager extends AbstractDongle {
 //            AppLogger.LOGGER.fine(TAG, "***************************************************************");
 //            AppLogger.LOGGER.fine(TAG, "****************************End Process************************");
 //            AppLogger.LOGGER.fine(TAG, "***************************************************************");
-            if (code != -50020)
+            if (code == 0)
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
         }
 
@@ -766,7 +766,7 @@ public class SunmiPosManager extends AbstractDongle {
                 @Override
                 public void onError(int code) {
                     try {
-                        String msg = AidlErrorCodeV2.valueOf(code).getMsg();
+                        //String msg = AidlErrorCodeV2.valueOf(code).getMsg();
 //                        AppLogger.LOGGER.throwing(TAG, 1, new Throwable("Erro al Ingresar el PIN "), msg);
 
                         mEMVOptV2.importPinInputStatus(mPinType, 3);
