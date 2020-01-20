@@ -554,6 +554,9 @@ public class SunmiPosManager extends AbstractDongle {
 //            AppLogger.LOGGER.fine(TAG, "***************************************************************");
             if (code == 0)
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
+            else
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TIMEOUT, "Error al Realizar la Operación", false));
+
         }
 
         @Override
