@@ -294,6 +294,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.resetQPOS();
     }
 
+    @Override
+    public void operacionFinalizada(int status) {
+
+    }
+
     public void operacionFinalizada(String arpc) {
         mPosService.sendOnlineProcessResult(arpc);
     }

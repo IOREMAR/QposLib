@@ -704,8 +704,8 @@ public class SunmiPosManager extends AbstractDongle {
     }
 
     @Override
-    public void operacionFinalizada(String ARPC) {
-        importOnlineProcessStatus(0, ARPC);
+    public void operacionFinalizada(int sttus) {
+        importOnlineProcessStatus(sttus);
 
     }
 
@@ -783,7 +783,7 @@ public class SunmiPosManager extends AbstractDongle {
         }
     }
 
-    private void importOnlineProcessStatus(final int status, final String ARPC) {
+    private void importOnlineProcessStatus(final int status) {
 //        AppLogger.LOGGER.fine(TAG, "importOnlineProcessStatus status:" + status    + "ARPC: " + ARPC );
         try {
             String[] tags = {
