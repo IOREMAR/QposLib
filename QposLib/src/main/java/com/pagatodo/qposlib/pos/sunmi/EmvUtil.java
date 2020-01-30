@@ -7,6 +7,7 @@ import com.sunmi.pay.hardware.aidlv2.bean.CapkV2;
 import com.sunmi.pay.hardware.aidlv2.bean.EmvTermParamV2;
 import com.sunmi.pay.hardware.aidlv2.emv.EMVOptV2;
 import com.sunmi.pay.hardware.aidlv2.security.SecurityOptV2;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,7 +45,7 @@ public final class EmvUtil {
 
 
             int result = mSecurityOptV2.savePlaintextKey(AidlConstantsV2.Security.KEY_TYPE_TDK,
-                    PosInstance.getInstance().getSunMIsessionKeys().get("plainDataKey"),  PosInstance.getInstance().getSunMIsessionKeys().get("plainDataKcvKey"),
+                    PosInstance.getInstance().getSunMIsessionKeys().get("plainDataKey"), PosInstance.getInstance().getSunMIsessionKeys().get("plainDataKcvKey"),
                     AidlConstantsV2.Security.KEY_ALG_TYPE_3DES, 10);
 //            AppLogger.LOGGER.fine(TAG, "save KEK result:" + result);
             if (result != 0) {
@@ -235,6 +236,10 @@ public final class EmvUtil {
             capkV2.checkSum = ByteUtil.hexStr2Bytes(tlv.getValue());
         }
         return capkV2;
+    }
+
+    public static boolean requiredNip(final String serviceCode) {
+        return serviceCode.charAt(2) == '0' || serviceCode.charAt(2) == '3' || serviceCode.charAt(2) == '5' || serviceCode.charAt(2) == '6' || serviceCode.charAt(2) == '7';
     }
 
 }
