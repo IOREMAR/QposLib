@@ -3,6 +3,7 @@ package com.pagatodo.qposlib.pos;
 public class PosResult {
 
     private PosTransactionResult responce;
+    private int response;
     private boolean correct;
     private String message;
 
@@ -16,10 +17,15 @@ public class PosResult {
         this.correct = isCorrecta;
     }
 
+    public PosResult(final int response, final String message) {
+        this.response = response;
+        this.message = message;
+    }
+
     public enum PosTransactionResult {
         FAILKEYS(1),
         APROBADO(0),
-        TERMINADO(5),
+        TERMINADO(-4107),
         DECLINADO(-50024),
         CANCELADO(7),
         CAPK_FAIL(1),
@@ -27,7 +33,7 @@ public class PosResult {
         NO_CHIP_FALLBACK(2),
         SELECT_APP_FAIL(8),
         ERROR_DISPOSITIVO(9),
-        CARD_NOT_SUPPORTED(10),
+        CARD_NOT_SUPPORTED(-4125),
         MISSING_MANDATORY_DATA(11),
         CARD_BLOCKED_OR_NO_EMV_APPS(12),
         INVALID_ICC_DATA(13),
@@ -53,9 +59,10 @@ public class PosResult {
         EMV_APP_CFG_ERROR(32),
         EMV_CAPK_CFG_ERROR(33),
         APDU_ERROR(34),
-        ICC_ONLINE_TIMEOUT(35),
+        ICC_ONLINE_TIMEOUT(-2801),
         AMOUNT_OUT_OF_LIMIT(36),
-        PIN_CANCEL(-50020);
+        PIN_CANCEL(-50020),
+        TRANS_REFUSED(-4000);
 
         public final int result;
 

@@ -390,15 +390,6 @@ public class SunmiPosManager extends AbstractDongle {
             } catch (Exception e) {
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Error al leer", false));
             }
-
-//            if (ValidatePerfilEMV.validateNIPifnecessary(serviceCode)){
-//                initPinPad();
-//            }else {
-//
-//            }
-//            AppLogger.LOGGER.fine(TAG, "Lectura Banda "+value);
-//            dongleListener.onSessionKeysObtenidas();
-//            dongleConnect.onSessionKeysObtenidas();
         }
 
         @Override
@@ -552,10 +543,7 @@ public class SunmiPosManager extends AbstractDongle {
 //            AppLogger.LOGGER.fine(TAG, "***************************************************************");
 //            AppLogger.LOGGER.fine(TAG, "****************************End Process************************");
 //            AppLogger.LOGGER.fine(TAG, "***************************************************************");
-            if (code == PosResult.PosTransactionResult.APROBADO.result)
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
-            else if (code == PosResult.PosTransactionResult.TIMEOUT.result)
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TIMEOUT, "Error al Realizar la Operación", false));
+            dongleListener.onRespuestaDongle(new PosResult(code, desc));
         }
 
         @Override
@@ -593,18 +581,6 @@ public class SunmiPosManager extends AbstractDongle {
         return Sbuilder.toString();
 
     }
-
-
-    //TODO  Hexadecimal Tags
-//    private String getHexEmvtags (final Bundle mapTags ){
-//        final StringBuilder Sbuilder =  new StringBuilder();
-//        for (final String tag : mapTags.keySet() ){
-//            Sbuilder.append(mapTags.get(tag).recoverToHexStr());
-//        }
-//        return Sbuilder.toString();
-//
-//    }
-
 
     private void limpiarVariables() {
         mCardType = 0;  // card type
@@ -758,7 +734,7 @@ public class SunmiPosManager extends AbstractDongle {
                     try {
 //                        AppLogger.LOGGER.throwing(TAG, 1, new Throwable("onCancel"), "onPin Canceled");
                         mEMVOptV2.importPinInputStatus(mPinType, 1);
-                        dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Error al Ingresar el PIN", false));
+                        //dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Error al Ingresar el PIN", false));
                     } catch (RemoteException exe) {
 //                        AppLogger.LOGGER.throwing(TAG,1,exe ,exe.getMessage());
                         cancelOperacion();
