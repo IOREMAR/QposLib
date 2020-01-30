@@ -75,6 +75,11 @@ public class PosResult {
         return responce;
     }
 
+
+    public int getResponse() {
+        return response;
+    }
+
     public String getMessage() {
         return message;
     }
