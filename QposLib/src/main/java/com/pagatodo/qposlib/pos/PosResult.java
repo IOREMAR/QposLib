@@ -41,7 +41,7 @@ public class PosResult {
         NFC_TERMINATED(15),
         CARD_REMOVED(16),
         TRADE_LOG_FULL(17),
-        TIMEOUT(-50021),
+        TIMEOUT(-30005),
         MAC_ERROR(19),
         CMD_TIEMPOFINALIZADO(20),
         CMD_NOT_AVAILABLE(21),

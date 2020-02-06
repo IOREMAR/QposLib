@@ -173,6 +173,7 @@ public class SunmiPosManager extends AbstractDongle {
 
     private void cancelprocess() {
         try {
+            mReadCardOptV2.cardOff(AidlConstantsV2.CardType.NFC.getValue());
             mReadCardOptV2.cancelCheckCard();
         } catch (Exception exe) {
         }
@@ -384,6 +385,7 @@ public class SunmiPosManager extends AbstractDongle {
                 Hashtable<String, String> dataCard = getDataOpTarjeta(bundle);
                 if (EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !fallbackActivado) {//Tarjeta por chip no fallback
                     dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP.result, "Ingrese la Tarjeta por el Chip o Utilice Otra Tarjeta"));
+                    cancelprocess();
                 } else {
                     if (EmvUtil.requiredNip(Objects.requireNonNull(dataCard.get(Constants.serviceCode))))
                         initPinPad(dataCard);
