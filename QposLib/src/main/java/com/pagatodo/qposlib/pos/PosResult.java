@@ -56,13 +56,14 @@ public class PosResult {
         CRC_ERROR(29),
         COMM_ERROR(30),
         WR_DATA_ERROR(31),
-        EMV_APP_CFG_ERROR(32),
+        EMV_APP_CFG_ERROR(-50009),
         EMV_CAPK_CFG_ERROR(33),
         APDU_ERROR(34),
         ICC_ONLINE_TIMEOUT(-2801),
         AMOUNT_OUT_OF_LIMIT(36),
         PIN_CANCEL(-50020),
-        TRANS_REFUSED(-4000);
+        TRANS_REFUSED(-4000),
+        SYNCOPERATION(-4115);
 
         public final int result;
 

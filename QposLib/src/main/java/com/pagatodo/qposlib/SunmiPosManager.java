@@ -24,6 +24,7 @@ import com.pagatodo.qposlib.pos.sunmi.Constants;
 import com.pagatodo.qposlib.pos.sunmi.EmvUtil;
 import com.pagatodo.qposlib.pos.sunmi.TLV;
 import com.pagatodo.qposlib.pos.sunmi.TLVUtil;
+import com.sunmi.pay.hardware.aidl.AidlConstants;
 import com.sunmi.pay.hardware.aidlv2.AidlConstantsV2;
 import com.sunmi.pay.hardware.aidlv2.AidlErrorCodeV2;
 import com.sunmi.pay.hardware.aidlv2.bean.EMVCandidateV2;
@@ -156,10 +157,9 @@ public class SunmiPosManager extends AbstractDongle {
 
     public void checkCard() {
         try {
-            int mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue() | AidlConstantsV2.CardType.IC.getValue();
+            int mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue() | AidlConstantsV2.CardType.IC.getValue()| AidlConstantsV2.CardType.NFC.getValue();
             mReadCardOptV2.checkCard(mCardType, mCheckCardCallback, 60);
         } catch (Exception exe) {
-//            AppLogger.LOGGER.throwing(TAG,1,exe,exe.getMessage());
             cancelprocess();
 
         }
@@ -169,12 +169,10 @@ public class SunmiPosManager extends AbstractDongle {
         try {
             mReadCardOptV2.cancelCheckCard();
         } catch (Exception exe) {
-//            AppLogger.LOGGER.throwing(TAG,1,exe,exe.getMessage());
         }
     }
 
     public void transactProcess() {
-//        AppLogger.LOGGER.fine(TAG, "transactProcess");
         try {
             EMVTransDataV2 emvTransData = new EMVTransDataV2();
             emvTransData.amount = amount;
@@ -182,7 +180,6 @@ public class SunmiPosManager extends AbstractDongle {
             emvTransData.cardType = mCardType;
             mEMVOptV2.transactProcess(emvTransData, mEMVListener);
         } catch (Exception exe) {
-//            AppLogger.LOGGER.throwing(TAG,1,exe,exe.getMessage());
             cancelprocess();
         }
     }
@@ -254,7 +251,6 @@ public class SunmiPosManager extends AbstractDongle {
 
     }
 
-    //--------------------------Pos Interface------------------------------------------------------------------
     @Override
     public void closeCommunication() {
         if (mSMPayKernel != null) {
@@ -403,7 +399,14 @@ public class SunmiPosManager extends AbstractDongle {
 
         @Override
         public void findRFCard(String s) throws RemoteException {
-
+            mCardType = AidlConstantsV2.CardType.NFC.getValue();
+            if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
+                Map<String, TLV> mapTAGS = getTlvData();
+                TagsTlvToTagsString(mapTAGS);
+                dongleListener.onResultData(getDataOpTarjeta(mapTAGS), DongleListener.DoTradeResult.ICC);
+            } else {
+                transactProcess();
+            }
         }
 
         @Override
@@ -660,16 +663,14 @@ public class SunmiPosManager extends AbstractDongle {
             }
             return map;
         } catch (Exception exe) {
-//            AppLogger.LOGGER.throwing(TAG,1,exe,exe.getMessage());
             cancelOperacion();
             return Collections.emptyMap();
         }
     }
 
     @Override
-    public void operacionFinalizada(int sttus) {
-        importOnlineProcessStatus(sttus);
-
+    public void operacionFinalizada(String arpc, int sttus) {
+        importOnlineProcessStatus(arpc, sttus);
     }
 
     private void initPinPad(final Hashtable<String, String> dataCard) {
@@ -738,18 +739,19 @@ public class SunmiPosManager extends AbstractDongle {
         }
     }
 
-    private void importOnlineProcessStatus(final int status) {
+    private void importOnlineProcessStatus(String arpc, final int status) {
         try {
             String[] tags = {
                     "71", "72", "91", "8A", "89"
             };
             String[] values = {
-                    "", "", "", "", ""
+                    "", "", "", arpc, ""
             };
             byte[] out = new byte[1024];
             int len = mEMVOptV2.importOnlineProcStatus(status, tags, values, out);
             if (len < 0) {
-                //Info error
+                if (len == PosResult.PosTransactionResult.SYNCOPERATION.result)
+                    dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.SYNCOPERATION.result, "Tarjeta retirada antes de tiempo."));
             } else {
                 byte[] bytes = Arrays.copyOf(out, len);
                 String hexStr = ByteUtil.bytes2HexStr(bytes);

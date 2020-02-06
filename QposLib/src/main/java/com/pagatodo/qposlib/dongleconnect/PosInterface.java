@@ -26,7 +26,7 @@ public interface PosInterface {
 
     void cancelOperacion();
 
-    void operacionFinalizada(final int status);
+    void operacionFinalizada(final String arpc, final int status);
 
     Map<String, String> getIccTags();
 

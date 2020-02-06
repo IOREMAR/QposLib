@@ -295,7 +295,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void operacionFinalizada(int status) {
+    public void operacionFinalizada(String arpc, int status) {
 
     }
 
