@@ -95,12 +95,9 @@ public class SunmiPosManager extends AbstractDongle {
         connectPayService();
     }
 
-    public boolean isFallbackActivado() {
-        return fallbackActivado;
-    }
-
-    public void setFallbackActivado(boolean fallbackActivado) {
-        this.fallbackActivado = fallbackActivado;
+    @Override
+    public void setFallBack(boolean isFallback) {
+        this.fallbackActivado = isFallback;
     }
 
     public static boolean isSunmiDevice() {
@@ -385,9 +382,9 @@ public class SunmiPosManager extends AbstractDongle {
             mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue();
             try {
                 Hashtable<String, String> dataCard = getDataOpTarjeta(bundle);
-                if(EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !isFallbackActivado()){//Tarjeta por chip no fallback
+                if (EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !fallbackActivado) {//Tarjeta por chip no fallback
                     dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP.result, "Ingrese la Tarjeta por el Chip o Utilice Otra Tarjeta"));
-                }else {
+                } else {
                     if (EmvUtil.requiredNip(Objects.requireNonNull(dataCard.get(Constants.serviceCode))))
                         initPinPad(dataCard);
                     else

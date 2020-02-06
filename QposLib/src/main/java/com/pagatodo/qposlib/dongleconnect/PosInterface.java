@@ -18,6 +18,8 @@ public interface PosInterface {
 
     String getPosInfo();
 
+    void setFallBack(boolean isFallback);
+
     void getPin(final String maskedPAN);
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
