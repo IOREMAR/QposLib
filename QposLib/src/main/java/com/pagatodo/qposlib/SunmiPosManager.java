@@ -78,6 +78,7 @@ public class SunmiPosManager extends AbstractDongle {
     private byte[] hexStrPin;
     private String amount;
     private int mAppSelect;
+    private boolean fallbackActivado = false;
     private int mPinType;   // 0-online pin, 1-offline pin
 
     private String track1 = "";
@@ -92,6 +93,14 @@ public class SunmiPosManager extends AbstractDongle {
         super(listener);
         this.setPosSunmi(this);
         connectPayService();
+    }
+
+    public boolean isFallbackActivado() {
+        return fallbackActivado;
+    }
+
+    public void setFallbackActivado(boolean fallbackActivado) {
+        this.fallbackActivado = fallbackActivado;
     }
 
     public static boolean isSunmiDevice() {
@@ -157,7 +166,7 @@ public class SunmiPosManager extends AbstractDongle {
 
     public void checkCard() {
         try {
-            int mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue() | AidlConstantsV2.CardType.IC.getValue()| AidlConstantsV2.CardType.NFC.getValue();
+            int mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue() | AidlConstantsV2.CardType.IC.getValue() | AidlConstantsV2.CardType.NFC.getValue();
             mReadCardOptV2.checkCard(mCardType, mCheckCardCallback, 60);
         } catch (Exception exe) {
             cancelprocess();
@@ -376,10 +385,14 @@ public class SunmiPosManager extends AbstractDongle {
             mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue();
             try {
                 Hashtable<String, String> dataCard = getDataOpTarjeta(bundle);
-                if (EmvUtil.requiredNip(Objects.requireNonNull(dataCard.get(Constants.serviceCode))))
-                    initPinPad(dataCard);
-                else
-                    dongleListener.onResultData(dataCard, DongleListener.DoTradeResult.MCR);
+                if(EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !isFallbackActivado()){//Tarjeta por chip no fallback
+                    dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP.result, "Ingrese la Tarjeta por el Chip o Utilice Otra Tarjeta"));
+                }else {
+                    if (EmvUtil.requiredNip(Objects.requireNonNull(dataCard.get(Constants.serviceCode))))
+                        initPinPad(dataCard);
+                    else
+                        dongleListener.onResultData(dataCard, DongleListener.DoTradeResult.MCR);
+                }
             } catch (Exception e) {
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Error al leer", false));
             }
@@ -409,9 +422,13 @@ public class SunmiPosManager extends AbstractDongle {
             }
         }
 
+
+        /**
+         * NO_CHIP_FALLBACK(code)
+         */
         @Override
         public void onError(int code, String message) throws RemoteException {
-
+            dongleListener.onRespuestaDongle(new PosResult(code, message));
         }
     };
 

@@ -242,4 +242,11 @@ public final class EmvUtil {
         return serviceCode.charAt(2) == '0' || serviceCode.charAt(2) == '3' || serviceCode.charAt(2) == '5' || serviceCode.charAt(2) == '6' || serviceCode.charAt(2) == '7';
     }
 
+    public static boolean isChipcard(final String serviceCode) {
+        if (!serviceCode.isEmpty()) {
+            return serviceCode.charAt(0) == '2' || serviceCode.charAt(0) == '6';
+        }
+        return false;
+    }
+
 }
