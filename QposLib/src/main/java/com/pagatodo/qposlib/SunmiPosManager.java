@@ -86,9 +86,6 @@ public class SunmiPosManager extends AbstractDongle {
 
     private TransactionAmountData transactionAmountData;
 
-    private SunmiPosManager() {
-    }
-
     public SunmiPosManager(DongleConnect listener) {
         super(listener);
         this.setPosSunmi(this);
@@ -381,10 +378,12 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void findMagCard(Bundle bundle) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue();
+            dongleListener.onFindCard(AidlConstantsV2.CardType.MAGNETIC);
             try {
                 Hashtable<String, String> dataCard = getDataOpTarjeta(bundle);
                 if (EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !fallbackActivado) {//Tarjeta por chip no fallback
                     dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP.result, "Ingrese la Tarjeta por el Chip o Utilice Otra Tarjeta"));
+                    mEMVOptV2.importCardNoStatus(0);
                     cancelprocess();
                 } else {
                     if (EmvUtil.requiredNip(Objects.requireNonNull(dataCard.get(Constants.serviceCode))))
@@ -400,6 +399,7 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void findICCard(String s) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.IC.getValue();
+            dongleListener.onFindCard(AidlConstantsV2.CardType.IC);
             if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
                 Map<String, TLV> mapTAGS = getTlvData();
                 TagsTlvToTagsString(mapTAGS);
@@ -412,6 +412,7 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void findRFCard(String s) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.NFC.getValue();
+            dongleListener.onFindCard(AidlConstantsV2.CardType.NFC);
             if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
                 Map<String, TLV> mapTAGS = getTlvData();
                 TagsTlvToTagsString(mapTAGS);
@@ -420,7 +421,6 @@ public class SunmiPosManager extends AbstractDongle {
                 transactProcess();
             }
         }
-
 
         /**
          * NO_CHIP_FALLBACK(code)
