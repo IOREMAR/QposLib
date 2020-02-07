@@ -519,19 +519,21 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onDoTradeResult(QPOSService.DoTradeResult doTradeResult, Hashtable<String, String> hashtable) {
         mEmvTags.clear();
         mCurrentTradeResult = doTradeResult;
+
         Log.i(TAG, mCurrentTradeResult.name());
         Log.i(TAG, doTradeResult.name());
-        Log.i(TAG, doTradeResult.name());
 
-        if (doTradeResult != QPOSService.DoTradeResult.MCR && doTradeResult != QPOSService.DoTradeResult.ICC) {
-            onFailTradeResult(doTradeResult);
+        if (doTradeResult == QPOSService.DoTradeResult.NFC_ONLINE
+                || doTradeResult == QPOSService.DoTradeResult.NFC_OFFLINE) {
+            String tlv = mPosService.getNFCBatchData().get("tlv");
+            hashtable.put("iccdata", tlv);
+            dongleListener.onResultData(hashtable, DongleListener.DoTradeResult.NFC_ONLINE);
+        } else if (doTradeResult == QPOSService.DoTradeResult.ICC) {
+            mPosService.doEmvApp(QPOSService.EmvOption.START);
+        } else if (doTradeResult == QPOSService.DoTradeResult.MCR) {
+            dongleListener.onResultData(hashtable, DongleListener.DoTradeResult.MCR);
         } else {
-            if (doTradeResult == QPOSService.DoTradeResult.MCR) {
-                dongleListener.onResultData(hashtable, DongleListener.DoTradeResult.MCR);
-            } else {
-                Log.i(TAG, " ");
-                mPosService.doEmvApp(QPOSService.EmvOption.START);
-            }
+            onFailTradeResult(doTradeResult);
         }
 //        mQposServiceCallback.onDoTradeResult(hashtable);
     }
@@ -849,12 +851,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
 
         if (isActualizado) {
-
-            mPosService.setCardTradeMode(QPOSService.CardTradeMode.SWIPE_INSERT_CARD);
+            mPosService.setCardTradeMode(QPOSService.CardTradeMode.SWIPE_TAP_INSERT_CARD);
             Log.i(TAG, "Iniciando Operación");
 
             mPosService.setOnlineTime(1000);
-
             mPosService.doCheckCard(30, 10);
         }
     }
@@ -1099,12 +1099,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
 
         final Integer emvLength = Integer.valueOf(TAGSEMV.length);
-        Map<String,String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
-        if(tags.get("tlv").isEmpty())
-        {
+        Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
+        if (tags.get("tlv").isEmpty()) {
             tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
         }
-        
+
         //TODO Usar Libreria De Qpos
         return tags;
     }
