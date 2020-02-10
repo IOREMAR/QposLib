@@ -38,7 +38,7 @@ public class PosResult {
         CARD_BLOCKED_OR_NO_EMV_APPS(12),
         INVALID_ICC_DATA(13),
         FALLBACK(14),
-        NFC_TERMINATED(15),
+        NFC_TERMINATED(-2520),
         CARD_REMOVED(16),
         TRADE_LOG_FULL(17),
         TIMEOUT(-30005),
