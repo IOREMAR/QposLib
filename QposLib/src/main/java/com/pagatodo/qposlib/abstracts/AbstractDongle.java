@@ -30,7 +30,6 @@ public abstract class AbstractDongle implements PosInterface {
         this.dongleListener = dongleListener;
     }
 
-
     public void setDongleConnect (final DongleConnect connect){
         dongleConnect = connect;
     }
