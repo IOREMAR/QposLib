@@ -1,6 +1,8 @@
 package com.pagatodo.qposlib.pos.sunmi;
 
 import com.pagatodo.qposlib.PosInstance;
+import com.pagatodo.qposlib.dongleconnect.DongleListener;
+import com.sunmi.pay.hardware.aidl.AidlConstants;
 import com.sunmi.pay.hardware.aidlv2.AidlConstantsV2;
 import com.sunmi.pay.hardware.aidlv2.bean.AidV2;
 import com.sunmi.pay.hardware.aidlv2.bean.CapkV2;
@@ -247,6 +249,15 @@ public final class EmvUtil {
             return serviceCode.charAt(0) == '2' || serviceCode.charAt(0) == '6';
         }
         return false;
+    }
+
+    public static DongleListener.DoTradeResult getTypeCard(AidlConstantsV2.CardType cardType) {
+        if (cardType.equals(AidlConstantsV2.CardType.NFC.getValue()))
+            return DongleListener.DoTradeResult.NFC_ONLINE;
+        if (cardType.equals(AidlConstantsV2.CardType.MAGNETIC.getValue()))
+            return DongleListener.DoTradeResult.MCR;
+        else
+            return DongleListener.DoTradeResult.ICC;
     }
 
 }

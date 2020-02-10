@@ -51,7 +51,6 @@ import java.util.Objects;
 
 import sunmi.paylib.SunmiPayKernel;
 
-import org.apache.commons.lang3.ArrayUtils;
 
 import static com.pagatodo.qposlib.QPosManager.ADITIONAL_CAPS;
 import static com.pagatodo.qposlib.QPosManager.COUNTRY_CODE;
@@ -378,7 +377,7 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void findMagCard(Bundle bundle) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue();
-            dongleListener.onFindCard(AidlConstantsV2.CardType.MAGNETIC);
+            dongleListener.onFindCard(EmvUtil.getTypeCard(AidlConstantsV2.CardType.MAGNETIC));
             try {
                 Hashtable<String, String> dataCard = getDataOpTarjeta(bundle);
                 if (EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !fallbackActivado) {//Tarjeta por chip no fallback
@@ -399,7 +398,7 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void findICCard(String s) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.IC.getValue();
-            dongleListener.onFindCard(AidlConstantsV2.CardType.IC);
+            dongleListener.onFindCard(EmvUtil.getTypeCard(AidlConstantsV2.CardType.IC));
             if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
                 Map<String, TLV> mapTAGS = getTlvData();
                 TagsTlvToTagsString(mapTAGS);
@@ -412,7 +411,7 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void findRFCard(String s) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.NFC.getValue();
-            dongleListener.onFindCard(AidlConstantsV2.CardType.NFC);
+            dongleListener.onFindCard(EmvUtil.getTypeCard(AidlConstantsV2.CardType.NFC));
             if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
                 Map<String, TLV> mapTAGS = getTlvData();
                 TagsTlvToTagsString(mapTAGS);
@@ -428,6 +427,21 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void onError(int code, String message) throws RemoteException {
             dongleListener.onRespuestaDongle(new PosResult(code, message));
+        }
+
+        @Override
+        public void findICCardEx(Bundle info) throws RemoteException {
+            //None
+        }
+
+        @Override
+        public void findRFCardEx(Bundle info) throws RemoteException {
+            //None
+        }
+
+        @Override
+        public void onErrorEx(Bundle info) throws RemoteException {
+            //None
         }
     };
 
@@ -566,13 +580,18 @@ public class SunmiPosManager extends AbstractDongle {
             // card off
             mReadCardOptV2.cardOff(mCardType);
         }
+
+        @Override
+        public void onRequestDataExchange(String cardNo) throws RemoteException {
+            //None
+        }
     };
 
     @Override
     public void cancelOperacion() {
         try {
             mReadCardOptV2.cancelCheckCard();
-            dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
+            //dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
         } catch (Exception exe) {
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
         }

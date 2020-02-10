@@ -13,7 +13,7 @@ public interface DongleListener {
 
     void onRespuestaDongle(final PosResult result);
 
-    void onFindCard(AidlConstantsV2.CardType cardType);
+    void onFindCard(DoTradeResult typeCard);
 
     void seleccionEmvApp(final List<String> listEMVApps, AplicacionEmv aplicacionEmv);
 
