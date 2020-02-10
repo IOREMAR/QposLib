@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.ArrayMap;
+import android.util.Log;
 
 import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
@@ -24,9 +25,7 @@ import com.pagatodo.qposlib.pos.sunmi.Constants;
 import com.pagatodo.qposlib.pos.sunmi.EmvUtil;
 import com.pagatodo.qposlib.pos.sunmi.TLV;
 import com.pagatodo.qposlib.pos.sunmi.TLVUtil;
-import com.sunmi.pay.hardware.aidl.AidlConstants;
 import com.sunmi.pay.hardware.aidlv2.AidlConstantsV2;
-import com.sunmi.pay.hardware.aidlv2.AidlErrorCodeV2;
 import com.sunmi.pay.hardware.aidlv2.bean.EMVCandidateV2;
 import com.sunmi.pay.hardware.aidlv2.bean.EMVTransDataV2;
 import com.sunmi.pay.hardware.aidlv2.bean.PinPadConfigV2;
@@ -39,7 +38,6 @@ import com.sunmi.pay.hardware.aidlv2.readcard.ReadCardOptV2;
 import com.sunmi.pay.hardware.aidlv2.security.SecurityOptV2;
 import com.sunmi.pay.hardware.aidlv2.system.BasicOptV2;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,14 +49,11 @@ import java.util.Objects;
 
 import sunmi.paylib.SunmiPayKernel;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import static com.pagatodo.qposlib.QPosManager.ADITIONAL_CAPS;
 import static com.pagatodo.qposlib.QPosManager.COUNTRY_CODE;
 import static com.pagatodo.qposlib.QPosManager.CURRENCY_CODE;
 import static com.pagatodo.qposlib.QPosManager.CVM_LIMIT;
 import static com.pagatodo.qposlib.QPosManager.TERMINAL_CAPS;
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class SunmiPosManager extends AbstractDongle {
 
@@ -164,7 +159,6 @@ public class SunmiPosManager extends AbstractDongle {
             mReadCardOptV2.checkCard(mCardType, mCheckCardCallback, 60);
         } catch (Exception exe) {
             cancelprocess();
-
         }
     }
 
@@ -173,6 +167,7 @@ public class SunmiPosManager extends AbstractDongle {
             mReadCardOptV2.cardOff(AidlConstantsV2.CardType.NFC.getValue());
             mReadCardOptV2.cancelCheckCard();
         } catch (Exception exe) {
+            Logger.LOGGER.throwing(TAG, exe.hashCode(), exe.fillInStackTrace(), exe.getMessage());
         }
     }
 
@@ -383,7 +378,7 @@ public class SunmiPosManager extends AbstractDongle {
                 Hashtable<String, String> dataCard = getDataOpTarjeta(bundle);
                 if (EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !fallbackActivado) {//Tarjeta por chip no fallback
                     dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP.result, "Ingrese la Tarjeta por el Chip o Utilice Otra Tarjeta"));
-                    mEMVOptV2.importCardNoStatus(-1);
+                    mEMVOptV2.importCardNoStatus(1);
                     cancelprocess();
                 } else {
                     if (EmvUtil.requiredNip(Objects.requireNonNull(dataCard.get(Constants.serviceCode))))
@@ -584,7 +579,6 @@ public class SunmiPosManager extends AbstractDongle {
             Sbuilder.append(mapTags.get(tag).recoverToHexStr());
         }
         return Sbuilder.toString();
-
     }
 
     private void limpiarVariables() {
