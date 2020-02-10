@@ -374,7 +374,6 @@ public class SunmiPosManager extends AbstractDongle {
     }
 
     private CheckCardCallbackV2 mCheckCardCallback = new CheckCardCallbackV2.Stub() {
-
         @Override
         public void findMagCard(Bundle bundle) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue();
@@ -428,6 +427,21 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void onError(int code, String message) throws RemoteException {
             dongleListener.onRespuestaDongle(new PosResult(code, message));
+        }
+
+        @Override
+        public void findICCardEx(Bundle bundle) throws RemoteException {
+            //None
+        }
+
+        @Override
+        public void findRFCardEx(Bundle bundle) throws RemoteException {
+            //None
+        }
+
+        @Override
+        public void onErrorEx(Bundle bundle) throws RemoteException {
+            //None
         }
     };
 
@@ -565,6 +579,11 @@ public class SunmiPosManager extends AbstractDongle {
             }
             // card off
             mReadCardOptV2.cardOff(mCardType);
+        }
+
+        @Override
+        public void onRequestDataExchange(String s) throws RemoteException {
+            //None
         }
     };
 

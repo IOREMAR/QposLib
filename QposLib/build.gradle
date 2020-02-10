@@ -16,6 +16,12 @@ android {
 
     }
 
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
     buildTypes {
         debug {
             debuggable true
@@ -31,20 +37,31 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+    buildToolsVersion = '28.0.3'
 
 }
 
-dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
 
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar','*.arr'])
     implementation 'com.android.support:appcompat-v7:28.0.0'
     testImplementation 'junit:junit:4.12'
     implementation 'com.github.Cutta:GifView:1.1'
-    implementation 'org.apache.commons:commons-lang3:3.6'
+    implementation 'org.apache.commons:commons-lang3:3.9'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation 'com.crashlytics.sdk.android:crashlytics:2.9.6'
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
     implementation files('libs/dspread_android_sdk_2.8.6.jar')
+    implementation(name: 'PayLib-release-1.4.34', ext: 'aar')
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.sunmi:sunmiui:1.1.22'
+    implementation 'com.sunmi:sunmiui:1.1.27'
 }
