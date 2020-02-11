@@ -9,7 +9,6 @@ import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 
-import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
@@ -277,11 +276,7 @@ public class SunmiPosManager extends AbstractDongle {
         limpiarVariables();
         initData(transactionAmountData.getCapacidades());
         this.transactionAmountData = transactionAmountData;
-        if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
-            checkCard();
-        } else {
-            startProcessEmv(transactionAmountData.getAmount());
-        }
+        startProcessEmv(transactionAmountData.getAmount());
     }
 
     @Override
