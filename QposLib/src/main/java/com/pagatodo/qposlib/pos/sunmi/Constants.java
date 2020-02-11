@@ -13,4 +13,17 @@ public class Constants {
     public static final String serviceCode = "serviceCode";
     public static final String pinBlock = "pinBlock";
     public static final String expiryDate = "expiryDate";
+
+    public enum TransType {
+        PURCHASE("00"),
+        ADVANCE("01"),
+        CASHBACK("09"),
+        REFUND("20");
+
+        public final String type;
+
+        TransType(String type) {
+            this.type = type;
+        }
+    }
 }

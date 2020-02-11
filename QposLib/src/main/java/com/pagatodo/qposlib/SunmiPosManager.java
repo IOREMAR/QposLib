@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.ArrayMap;
-import android.util.Log;
 
 import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
@@ -25,9 +24,9 @@ import com.pagatodo.qposlib.pos.sunmi.Constants;
 import com.pagatodo.qposlib.pos.sunmi.EmvUtil;
 import com.pagatodo.qposlib.pos.sunmi.TLV;
 import com.pagatodo.qposlib.pos.sunmi.TLVUtil;
+import com.sunmi.pay.hardware.aidl.AidlConstants;
 import com.sunmi.pay.hardware.aidlv2.AidlConstantsV2;
 import com.sunmi.pay.hardware.aidlv2.bean.EMVCandidateV2;
-import com.sunmi.pay.hardware.aidlv2.bean.EMVTransDataV2;
 import com.sunmi.pay.hardware.aidlv2.bean.PinPadConfigV2;
 import com.sunmi.pay.hardware.aidlv2.emv.EMVListenerV2;
 import com.sunmi.pay.hardware.aidlv2.emv.EMVOptV2;
@@ -173,11 +172,16 @@ public class SunmiPosManager extends AbstractDongle {
 
     public void transactProcess() {
         try {
-            EMVTransDataV2 emvTransData = new EMVTransDataV2();
-            emvTransData.amount = amount;
-            emvTransData.flowType = 1;
-            emvTransData.cardType = mCardType;
-            mEMVOptV2.transactProcess(emvTransData, mEMVListener);
+            Bundle bundle = new Bundle();
+            bundle.putString("amount", amount);
+            bundle.putString("transType", transactionAmountData.getTransType().type);
+            if (mCardType == AidlConstants.CardType.NFC.getValue()) {
+                bundle.putInt("flowType", AidlConstantsV2.EMV.FlowType.TYPE_NFC_SPEEDUP);
+            } else {
+                bundle.putInt("flowType", AidlConstantsV2.EMV.FlowType.TYPE_EMV_STANDARD);
+            }
+            bundle.putInt("cardType", mCardType);
+            mEMVOptV2.transactProcessEx(bundle, mEMVListener);
         } catch (Exception exe) {
             cancelprocess();
         }
@@ -378,7 +382,6 @@ public class SunmiPosManager extends AbstractDongle {
                 Hashtable<String, String> dataCard = getDataOpTarjeta(bundle);
                 if (EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !fallbackActivado) {//Tarjeta por chip no fallback
                     dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP.result, "Ingrese la Tarjeta por el Chip o Utilice Otra Tarjeta"));
-                    mEMVOptV2.importCardNoStatus(1);
                     cancelprocess();
                 } else {
                     if (EmvUtil.requiredNip(Objects.requireNonNull(dataCard.get(Constants.serviceCode))))
@@ -395,26 +398,14 @@ public class SunmiPosManager extends AbstractDongle {
         public void findICCard(String s) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.IC.getValue();
             dongleListener.onFindCard(AidlConstantsV2.CardType.IC);
-            if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
-                Map<String, TLV> mapTAGS = getTlvData();
-                TagsTlvToTagsString(mapTAGS);
-                dongleListener.onResultData(getDataOpTarjeta(mapTAGS), DongleListener.DoTradeResult.ICC);
-            } else {
-                transactProcess();
-            }
+            transactProcess();
         }
 
         @Override
         public void findRFCard(String s) throws RemoteException {
             mCardType = AidlConstantsV2.CardType.NFC.getValue();
             dongleListener.onFindCard(AidlConstantsV2.CardType.NFC);
-            if (transactionAmountData.getTransactionType().equals(QPOSService.TransactionType.INQUIRY)) {
-                Map<String, TLV> mapTAGS = getTlvData();
-                TagsTlvToTagsString(mapTAGS);
-                dongleListener.onResultData(getDataOpTarjeta(mapTAGS), DongleListener.DoTradeResult.ICC);
-            } else {
-                transactProcess();
-            }
+            transactProcess();
         }
 
         /**
@@ -423,6 +414,21 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void onError(int code, String message) throws RemoteException {
             dongleListener.onRespuestaDongle(new PosResult(code, message));
+        }
+
+        @Override
+        public void findICCardEx(Bundle bundle) throws RemoteException {
+            //None
+        }
+
+        @Override
+        public void findRFCardEx(Bundle bundle) throws RemoteException {
+            //None
+        }
+
+        @Override
+        public void onErrorEx(Bundle bundle) throws RemoteException {
+            //None
         }
     };
 
@@ -560,6 +566,11 @@ public class SunmiPosManager extends AbstractDongle {
             }
             // card off
             mReadCardOptV2.cardOff(mCardType);
+        }
+
+        @Override
+        public void onRequestDataExchange(String s) throws RemoteException {
+            //None
         }
     };
 
