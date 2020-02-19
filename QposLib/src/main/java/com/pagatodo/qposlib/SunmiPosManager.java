@@ -55,7 +55,7 @@ import static com.pagatodo.qposlib.QPosManager.TERMINAL_CAPS;
 
 public class SunmiPosManager extends AbstractDongle {
 
-    private static final String TAG = SunmiPosManager.class.getSimpleName();
+    public static final String TAG = SunmiPosManager.class.getSimpleName();
     private SunmiPayKernel mSMPayKernel;
 
     public static BasicOptV2 mBasicOptV2;
@@ -692,20 +692,19 @@ public class SunmiPosManager extends AbstractDongle {
     private void initPinPad(final Hashtable<String, String> dataCard) {
         try {
             PinPadConfigV2 pinPadConfig = new PinPadConfigV2();
-            pinPadConfig.setPinPadType(0);
+            pinPadConfig.setPinPadType(1);
             pinPadConfig.setPinType(mPinType);
             pinPadConfig.setOrderNumKey(true);
             byte[] panBytes = mCardNo.substring(mCardNo.length() - 13, mCardNo.length() - 1).getBytes("US-ASCII");
             pinPadConfig.setPan(panBytes);
             pinPadConfig.setTimeout(60 * 1000); // input password timeout
             pinPadConfig.setPinKeyIndex(11);    // pik index
-            pinPadConfig.setMaxInput(6);
+            pinPadConfig.setMaxInput(5);
             pinPadConfig.setMinInput(4);
             pinPadConfig.setKeySystem(0);
-
             pinPadConfig.setAlgorithmType(0);
-            mPinPadOptV2.initPinPad(pinPadConfig, new PinPadListenerV2.Stub() {
 
+            dongleListener.onShowPinPad(new PinPadListenerV2.Stub() {
                 @Override
                 public void onPinLength(int len) {
                     //Length pin
@@ -713,7 +712,6 @@ public class SunmiPosManager extends AbstractDongle {
 
                 @Override
                 public void onConfirm(int i, byte[] pinBlock) {
-
                     try {
                         if (pinBlock != null) {
                             hexStrPin = pinBlock;
@@ -728,7 +726,6 @@ public class SunmiPosManager extends AbstractDongle {
                     } catch (RemoteException exe) {
                         cancelOperacion();
                     }
-
                 }
 
                 @Override
@@ -749,7 +746,7 @@ public class SunmiPosManager extends AbstractDongle {
                     }
                 }
 
-            });
+            }, pinPadConfig);
         } catch (Exception exe) {
             cancelOperacion();
         }

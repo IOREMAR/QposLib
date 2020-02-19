@@ -62,6 +62,7 @@ public class PosResult {
         ICC_ONLINE_TIMEOUT(-2801),
         AMOUNT_OUT_OF_LIMIT(36),
         PIN_CANCEL(-50020),
+        PIN_ERROR(-50021),
         TRANS_REFUSED(-4000),
         SYNCOPERATION(-4115);
 

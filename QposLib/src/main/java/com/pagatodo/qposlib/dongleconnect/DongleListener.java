@@ -3,6 +3,8 @@ package com.pagatodo.qposlib.dongleconnect;
 
 import com.pagatodo.qposlib.pos.PosResult;
 import com.sunmi.pay.hardware.aidlv2.AidlConstantsV2;
+import com.sunmi.pay.hardware.aidlv2.bean.PinPadConfigV2;
+import com.sunmi.pay.hardware.aidlv2.pinpad.PinPadListenerV2;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -13,7 +15,9 @@ public interface DongleListener {
 
     void onRespuestaDongle(final PosResult result);
 
-    void onFindCard(AidlConstantsV2.CardType cardType);
+    void onFindCard(final AidlConstantsV2.CardType cardType);
+
+    void onShowPinPad(PinPadListenerV2.Stub pinPadListener, PinPadConfigV2 pinPadConfig);
 
     void seleccionEmvApp(final List<String> listEMVApps, AplicacionEmv aplicacionEmv);
 
