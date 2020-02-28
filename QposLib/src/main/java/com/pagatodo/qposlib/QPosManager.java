@@ -48,9 +48,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     /*Constantes
      */
     private static final String POS_ID = "posId";
+    private final String TAG = QPosManager.class.getSimpleName();
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
-    private final String TAG = QPosManager.class.getSimpleName();
     public static final String TERMINAL_CAPS = "TERMINAL_CAPS";
     public static final String ADITIONAL_CAPS = "ADITIONAL_CAPS";
     public static final String CURRENCY_CODE = "CURRENCY_CODE";
@@ -71,6 +71,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private ArrayList<String> mListCapabilities;
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
+    private boolean isLogEnabled;
 
     public interface QposServiceListener {
         void onQposIdResult(Hashtable<String, String> hashtable);
@@ -94,6 +95,14 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         dongleListener = listener;
     }
 
+    public QPosManager(final T dongleDevice, final DongleConnect listener, final boolean enableLog) {
+        super(listener);
+        isLogEnabled = enableLog;
+        mQStatePOS.updateState(POSConnectionState.STATE_POS.NONE);
+        this.mDevicePos = dongleDevice;
+        this.setQposDspread(this);
+    }
+
     public QPosManager(final T dongleDevice, final DongleConnect listener) {
         super(listener);
         mQStatePOS.updateState(POSConnectionState.STATE_POS.NONE);
@@ -103,6 +112,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public Hashtable<String, String> getQposIdHash() {
+        logFlow("getQposIdHash() called");
         return mQposIdHash;
     }
 
@@ -112,6 +122,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void openCommunication() {
+        logFlow("openCommunication() called");
+
         if (!isQPOSConnected()) {
             this.mDevice = mDevicePos;
 
@@ -145,6 +157,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public void closeCommunication() {
+        logFlow("closeCommunication() called");
+
         if (mPosService != null) {
             mQStatePOS.updateState(POSConnectionState.STATE_POS.CLOSE);
 
@@ -167,21 +181,25 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void resetQPOS() {
+        logFlow("resetQPOS() called");
         mPosService.resetQPOS();
     }
 
     @Override
     public String getPosInfo() {
+        logFlow("getPosInfo() returned: " + null);
         return null;
     }
 
     @Override
     public void getPin(String maskedPAN) {
+        logFlow("getPin() called with: maskedPAN = [" + maskedPAN + "]");
         mPosService.getPin(1, 10, 8, REQUIERE_PIN, maskedPAN, getDateforTRX(), 15);
     }
 
     @Override
     public void getSessionKeys(final String clavePublicaFile, final Context context) {
+        logFlow("getSessionKeys() called with: clavePublicaFile = [" + clavePublicaFile + "], context = [" + context + "]");
         try {
             mPosService.updateRSA(getPublicKey(clavePublicaFile, context), clavePublicaFile);
         } catch (Exception exe) {
@@ -192,6 +210,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void doTransaccion(TransactionAmountData transactionAmountData) {
+        logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "]");
 
         if (mPosService.isQposPresent()) {
 
@@ -214,7 +233,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             this.transactionAmountData = transactionAmountData;
 
             final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
-            Log.i(TAG, lisCap);
+            logFlow("doTransaccion: listCap = " + lisCap);
 
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         } else {
@@ -223,6 +242,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public PublicKey getPublicKey(final String filename, final Context contextApp) throws Exception {//NOSONAR
+        logFlow("getPublicKey() called with: filename = [" + filename + "], contextApp = [" + contextApp + "]");
+
         final InputStream inputStream = contextApp.getAssets().open(filename);
         final BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
         String line = null;
@@ -244,7 +265,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         final byte[] buffer = base64Decoder.decodeBuffer(sb.toString());
         final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(buffer);
-        return keyFactory.generatePublic(keySpec);
+        final PublicKey publicKey = keyFactory.generatePublic(keySpec);
+
+        logFlow("getPublicKey() returned: " + publicKey);
+        return publicKey;
     }
 
     public boolean isQPOSConnected() {
@@ -287,29 +311,30 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return mPosService.updatePosFirmware(dataToUpdate, file);
     }
 
-    public void logCapabilities() {
-        final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
-        Log.i(TAG, lisCap);
-    }
-
     public int getUpdateProgress() {
-        return mPosService.getUpdateProgress();
+        int i = mPosService.getUpdateProgress();
+        logFlow("getUpdateProgress() returned: " + i);
+        return i;
     }
 
     public void cancelOperacion() {
+        logFlow("cancelOperacion() called");
         mPosService.resetQPOS();
     }
 
     public void operacionFinalizada(String arpc) {
+        logFlow("operacionFinalizada() called with: arpc = [" + arpc + "]");
         mPosService.sendOnlineProcessResult(arpc);
     }
 
     public Map<String, String> getIccTags() {
+        logFlow("getIccTags() returned: " + mEmvTags);
         return mEmvTags;
     }
 
     @Override
     public DspreadDevicePOS getDeviePos() {
+        logFlow("getDeviePos() returned: " + null);
         return null;
     }
 
@@ -318,6 +343,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public QPOSDeviceInfo getDevicePosInfo() {
+        logFlow("getDevicePosInfo() returned: " + mQPosDeviceInfo);
         return mQPosDeviceInfo;
     }
 
@@ -407,6 +433,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mListCapabilities.add(EmvAppTag.Transaction_Currency_Code + capabillities.get(CURRENCY_CODE));
         mListCapabilities.add(EmvAppTag.Terminal_Country_Code + capabillities.get(COUNTRY_CODE));
         mListCapabilities.add(EmvAppTag.terminal_execute_cvm_limit + capabillities.get(CVM_LIMIT));
+
+        mListCapabilities.add(EmvAppTag.terminal_contactless_offline_floor_limit + "000007D0");
+        mListCapabilities.add(EmvAppTag.terminal_contactless_transaction_limit + "000000080000");
+        mListCapabilities.add(EmvAppTag.Contactless_CVM_Required_limit + "000000002001");
     }
 
     public void getPosServicePin(String maskedPAN, String dateforTRX) {
@@ -416,32 +446,34 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     //Montón de métodos heredados de la librería del QPOS
     @Override
     public void onRequestWaitingUser() {
-
+        logFlow("onRequestWaitingUser() called");
     }
 
     @Override
-    public void onQposIdResult(Hashtable<String, String> hashtable) {
-        mQposIdHash = hashtable;
+    public void onQposIdResult(final Hashtable<String, String> ksnDict) {
+        logFlow("onQposIdResult() called with: ksnDict = [" + ksnDict + "]");
+        mQposIdHash = ksnDict;
         mPosService.getQposInfo();
     }
 
     @Override
-    public void onQposKsnResult(Hashtable<String, String> hashtable) {
-
+    public void onQposKsnResult(final Hashtable<String, String> ksn) {
+        logFlow("onQposKsnResult() called with: ksn = [" + ksn + "]");
     }
 
     @Override
-    public void onQposIsCardExist(boolean b) {
-
+    public void onQposIsCardExist(final boolean haveCard) {
+        logFlow("onQposIsCardExist() called with: haveCard = [" + haveCard + "]");
     }
 
     @Override
     public void onRequestDeviceScanFinished() {
-
+        logFlow("onRequestDeviceScanFinished() called");
     }
 
     @Override
-    public void onQposInfoResult(Hashtable<String, String> posInfoData) {
+    public void onQposInfoResult(final Hashtable<String, String> posInfoData) {
+        logFlow("onQposInfoResult() called with: posInfoData = [" + posInfoData + "]");
         mQPosDeviceInfo = new QPOSDeviceInfo();
 
         mQPosDeviceInfo.setUpdateWorkKeyFlag(posInfoData.get("updateWorkKeyFlag"));
@@ -461,10 +493,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onQposGenerateSessionKeysResult(Hashtable<String, String> sessionKeys) {
-        if (sessionKeys != null && !sessionKeys.isEmpty()) {
+    public void onQposGenerateSessionKeysResult(final Hashtable<String, String> rsaData) {
+        logFlow("onQposGenerateSessionKeysResult() called with: rsaData = [" + rsaData + "]");
+        if (rsaData != null && !rsaData.isEmpty()) {
 
-            PosInstance.getInstance().setSessionKeys(sessionKeys);
+            PosInstance.getInstance().setSessionKeys(rsaData);
 
 //            final QPOSSessionKeys qposSessionKeys = new QPOSSessionKeys(HexUtil.hex2byte(sessionKeys.get("enDataCardKey"), StandardCharsets.ISO_8859_1),
 //                    HexUtil.hex2byte(sessionKeys.get("enPinKcvKey").substring(0, 6), StandardCharsets.ISO_8859_1),
@@ -484,6 +517,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onQposDoSetRsaPublicKey(boolean isSetRSA) {
+        logFlow("onQposDoSetRsaPublicKey() called with: isSetRSA = [" + isSetRSA + "]");
         if (!isSetRSA) {
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Clave RSA No Cargada", false));
         } else {
@@ -492,46 +526,44 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onSearchMifareCardResult(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "onSearchMifareCardResult " + mPosService.getMifareStatusMsg());
-        dongleListener.onSearchMifareCardResult(hashtable);
+    public void onSearchMifareCardResult(final Hashtable<String, String> cardData) {
+        logFlow("onSearchMifareCardResult() called with: cardData = [" + cardData + "]");
+        dongleListener.onSearchMifareCardResult(cardData);
     }
 
     @Override
-    public void onBatchReadMifareCardResult(String s, Hashtable<String, List<String>> hashtable) {
-        Log.i(TAG, "onBatchReadMifareCardResult " + mPosService.getMifareStatusMsg());
-        dongleListener.onBatchReadMifareCardResult(s, hashtable);
+    public void onBatchReadMifareCardResult(final String msg, final Hashtable<String, List<String>> cardData) {
+        logFlow("onBatchReadMifareCardResult() called with: msg = [" + msg + "], cardData = [" + cardData + "]");
+        dongleListener.onBatchReadMifareCardResult(msg, cardData);
     }
 
     @Override
-    public void onBatchWriteMifareCardResult(String s, Hashtable<String, List<String>> hashtable) {
+    public void onBatchWriteMifareCardResult(final String msg, final Hashtable<String, List<String>> cardData) {
+        logFlow("onBatchWriteMifareCardResult() called with: msg = [" + msg + "], cardData = [" + cardData + "]");
         final String status = mPosService.getMifareStatusMsg();
-        Log.i(TAG, "onBatchWriteMifareCardResult " + status);
 
         if ("SUCCESS".equals(status)) {//NOSONAR
-            dongleListener.onBatchWriteMifareCardResult(s, hashtable);
+            dongleListener.onBatchWriteMifareCardResult(msg, cardData);
         } else {
             dongleListener.onErrorWriteMifareCard();
         }
     }
 
     @Override
-    public void onDoTradeResult(QPOSService.DoTradeResult doTradeResult, Hashtable<String, String> hashtable) {
+    public void onDoTradeResult(final QPOSService.DoTradeResult doTradeResult, final Hashtable<String, String> decodeData) {
+        logFlow("onDoTradeResult() called with: doTradeResult = [" + doTradeResult + "], decodeData = [" + decodeData + "]");
         mEmvTags.clear();
         mCurrentTradeResult = doTradeResult;
-
-        Log.i(TAG, mCurrentTradeResult.name());
-        Log.i(TAG, doTradeResult.name());
 
         if (doTradeResult == QPOSService.DoTradeResult.NFC_ONLINE
                 || doTradeResult == QPOSService.DoTradeResult.NFC_OFFLINE) {
             String tlv = mPosService.getNFCBatchData().get("tlv");
-            hashtable.put("iccdata", tlv);
-            dongleListener.onResultData(hashtable, DongleListener.DoTradeResult.NFC_ONLINE);
+            decodeData.put("iccdata", tlv);
+            dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.NFC_ONLINE);
         } else if (doTradeResult == QPOSService.DoTradeResult.ICC) {
             mPosService.doEmvApp(QPOSService.EmvOption.START);
         } else if (doTradeResult == QPOSService.DoTradeResult.MCR) {
-            dongleListener.onResultData(hashtable, DongleListener.DoTradeResult.MCR);
+            dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.MCR);
         } else {
             onFailTradeResult(doTradeResult);
         }
@@ -539,37 +571,37 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onFinishMifareCardResult(boolean isFailedChip) {
-        Log.i(TAG, "onFinishMifareCardResult " + mPosService.getMifareStatusMsg());
+    public void onFinishMifareCardResult(final boolean isFailedChip) {
+        logFlow("onFinishMifareCardResult() called with: isFailedChip = [" + isFailedChip + "]");
         dongleListener.onFinishMifareCardResult(isFailedChip);
     }
 
     @Override
-    public void onVerifyMifareCardResult(boolean isFailedChip) {
+    public void onVerifyMifareCardResult(final boolean flag) {
+        logFlow("onVerifyMifareCardResult() called with: flag = [" + flag + "]");
         final String status = mPosService.getMifareStatusMsg();
-        Log.i(TAG, " onVerifyMifareCardResult " + mPosService.getMifareStatusMsg());
 
         if ("SUCCESS".equals(status)) {//NOSONAR
-            dongleListener.onVerifyMifareCardResult(isFailedChip);
+            dongleListener.onVerifyMifareCardResult(flag);
         } else {
             dongleListener.onErrorWriteMifareCard();
         }
     }
 
     @Override
-    public void onReadMifareCardResult(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "onReadMifareCardResult " + mPosService.getMifareStatusMsg());
+    public void onReadMifareCardResult(final Hashtable<String, String> flag) {
+        logFlow("onReadMifareCardResult() called with: flag = [" + flag + "]");
     }
 
     @Override
-    public void onWriteMifareCardResult(boolean b) {
-        Log.i(TAG, "onWriteMifareCardResult " + mPosService.getMifareStatusMsg());
+    public void onWriteMifareCardResult(final boolean flag) {
+        logFlow("onWriteMifareCardResult() called with: flag = [" + flag + "]");
     }
 
     @Override
-    public void onOperateMifareCardResult(Hashtable<String, String> hashtable) {
+    public void onOperateMifareCardResult(final Hashtable<String, String> hashtable) {
+        logFlow("onOperateMifareCardResult() called with: hashtable = [" + hashtable + "]");
         final String status = mPosService.getMifareStatusMsg();
-        Log.i(TAG, "onOperateMifareCardResult " + mPosService.getMifareStatusMsg());
 
         if ("SUCCESS".equals(status)) {
             dongleListener.onOperateMifareCardResult(hashtable);
@@ -579,42 +611,44 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void getMifareCardVersion(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "getMifareCardVersion " + mPosService.getMifareStatusMsg());
+    public void getMifareCardVersion(final Hashtable<String, String> hashtable) {
+        logFlow("getMifareCardVersion() called with: hashtable = [" + hashtable + "]");
     }
 
     @Override
-    public void getMifareReadData(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "getMifareReadData " + mPosService.getMifareStatusMsg());
+    public void getMifareReadData(final Hashtable<String, String> hashtable) {
+        logFlow("getMifareReadData() called with: hashtable = [" + hashtable + "]");
     }
 
     @Override
-    public void getMifareFastReadData(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "getMifareFastReadData " + mPosService.getMifareStatusMsg());
+    public void getMifareFastReadData(final Hashtable<String, String> hashtable) {
+        logFlow("getMifareFastReadData() called with: hashtable = [" + hashtable + "]");
     }
 
     @Override
-    public void writeMifareULData(String s) {
-        Log.i(TAG, "writeMifareULData " + mPosService.getMifareStatusMsg());
+    public void writeMifareULData(final String flag) {
+        logFlow("writeMifareULData() called with: flag = [" + flag + "]");
     }
 
     @Override
-    public void verifyMifareULData(Hashtable<String, String> hashtable) {
-        Log.i(TAG, "verifyMifareULData " + mPosService.getMifareStatusMsg());
+    public void verifyMifareULData(final Hashtable<String, String> hashtable) {
+        logFlow("verifyMifareULData() called with: hashtable = [" + hashtable + "]");
     }
 
     @Override
-    public void transferMifareData(String s) {
-        Log.i(TAG, "transferMifareData " + mPosService.getMifareStatusMsg());
+    public void transferMifareData(final String flag) {
+        logFlow("transferMifareData() called with: flag = [" + flag + "]");
     }
 
     @Override
     public void onRequestSetAmount() {
+        logFlow("onRequestSetAmount() called");
         mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
     }
 
     @Override
-    public void onRequestSelectEmvApp(ArrayList<String> listEMVApps) {
+    public void onRequestSelectEmvApp(final ArrayList<String> listEMVApps) {
+        logFlow("onRequestSelectEmvApp() called with: listEMVApps = [" + listEMVApps + "]");
         if (listEMVApps.size() == 1) {
             mPosService.selectEmvApp(0);
         } else if (listEMVApps.size() > 1) {
@@ -630,42 +664,44 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onRequestIsServerConnected() {
-
+        logFlow("onRequestIsServerConnected() called");
     }
 
     @Override
     public void onRequestFinalConfirm() {
-
+        logFlow("onRequestFinalConfirm() called");
     }
 
     @Override
     public void deviceCancel() {
+        logFlow("deviceCancel() called");
         mPosService.close();
         closeCommunication();
     }
 
     @Override
     public void onRequestOnlineProcess(String tlvString) {
-        Log.i(TAG, tlvString);
+        logFlow("onRequestOnlineProcess() called with: tlvString = [" + tlvString + "]");
         mEmvTags = reciverEMVTags();
         mDecodeData = mPosService.anlysEmvIccData(tlvString);
         mDecodeData.put(ICCDecodeData.TLV.getLabel(), tlvString);
         //TODO Tiempo De Preguntar Los TAGS Al Dongle
 //        CamposEMVData.getInstance().reciverEMVTags();
         final String iccTag = "9F33: ".concat(mPosService.getICCTag(0, 1, "9F33").toString());
-        Log.v(TAG, iccTag);
+        logFlow("onRequestOnlineProcess: iccTag = " + iccTag);
         dongleListener.onResultData(mDecodeData, DongleListener.DoTradeResult.ICC);
     }
 
     @Override
     public void onRequestTime() {
-        Log.i(TAG, "Ingresand Tiempo al PosInterface");
+        logFlow("onRequestTime() called");
         Context context = PosInstance.getInstance().getAppContext();
         mPosService.sendTime(new SimpleDateFormat("yyyyMMddHHmmss", context.getResources().getConfiguration().locale).format(Calendar.getInstance().getTime()));
     }
 
     @Override
-    public void onRequestTransactionResult(QPOSService.TransactionResult transactionResult) {
+    public void onRequestTransactionResult(final QPOSService.TransactionResult transactionResult) {
+        logFlow("onRequestTransactionResult() called with: transactionResult = [" + transactionResult + "]");
         switch (transactionResult) {
 
             case CANCEL:
@@ -686,40 +722,42 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onRequestTransactionLog(String s) {
-
+    public void onRequestTransactionLog(final String tlv) {
+        logFlow("onRequestTransactionLog() called with: tlv = [" + tlv + "]");
     }
 
     @Override
-    public void onRequestBatchData(String s) {
-
+    public void onRequestBatchData(final String tlv) {
+        logFlow("onRequestBatchData() called with: tlv = [" + tlv + "]");
     }
 
     @Override
     public void onRequestQposConnected() {
+        logFlow("onRequestQposConnected() called");
         mQStatePOS.updateState(POSConnectionState.STATE_POS.CONNECTED);
         mPosService.getQposId();
     }
 
     @Override
     public void onRequestQposDisconnected() {
-        Log.i(TAG, "Disconnected False");
+        logFlow("onRequestQposDisconnected() called");
         dongleConnect.ondevicedisconnected();
     }
 
     @Override
     public void onRequestNoQposDetected() {
+        logFlow("onRequestNoQposDetected() called");
         dongleConnect.onRequestNoQposDetected();
-        Log.i(TAG, "Disconnected False2");
     }
 
     @Override
     public void onRequestNoQposDetectedUnbond() {
-        Log.i(TAG, "Disconnected False3");
+        logFlow("onRequestNoQposDetectedUnbond() called");
     }
 
     @Override
     public void onError(QPOSService.Error error) {
+        logFlow("onError() called with: error = [" + error + "]");
         this.cancelOperacion();
         if (mDecodeData != null) {
             mPosService.resetQPOS();
@@ -754,94 +792,95 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onRequestDisplay(QPOSService.Display display) {
-
+    public void onRequestDisplay(final QPOSService.Display displayMsg) {
+        logFlow("onRequestDisplay() called with: displayMsg = [" + displayMsg + "]");
     }
 
     @Override
-    public void onReturnReversalData(String s) {
-
+    public void onReturnReversalData(final String tlv) {
+        logFlow("onReturnReversalData() called with: tlv = [" + tlv + "]");
     }
 
     @Override
-    public void onReturnGetPinResult(Hashtable<String, String> hashtable) {
-
+    public void onReturnGetPinResult(final Hashtable<String, String> result) {
+        logFlow("onReturnGetPinResult() called with: result = [" + result + "]");
     }
 
     @Override
-    public void onReturnPowerOnIccResult(boolean b, String s, String s1, int i) {
-
+    public void onReturnPowerOnIccResult(final boolean isSuccess, final String ksn, final String atr, final int atrLen) {
+        logFlow("onReturnPowerOnIccResult() called with: isSuccess = [" + isSuccess + "], ksn = [" + ksn + "], atr = [" + atr + "], atrLen = [" + atrLen + "]");
     }
 
     @Override
-    public void onReturnPowerOffIccResult(boolean b) {
-
+    public void onReturnPowerOffIccResult(final boolean isSuccess) {
+        logFlow("onReturnPowerOffIccResult() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
-    public void onReturnApduResult(boolean b, String s, int i) {
-
+    public void onReturnApduResult(final boolean isSuccess, final String apdu, final int apduLen) {
+        logFlow("onReturnApduResult() called with: isSuccess = [" + isSuccess + "], apdu = [" + apdu + "], apduLen = [" + apduLen + "]");
     }
 
     @Override
-    public void onReturnSetSleepTimeResult(boolean b) {
-
+    public void onReturnSetSleepTimeResult(final boolean isSuccess) {
+        logFlow("onReturnSetSleepTimeResult() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
-    public void onGetCardNoResult(String s) {
-
+    public void onGetCardNoResult(final String cardNo) {
+        logFlow("onGetCardNoResult() called with: cardNo = [" + cardNo + "]");
     }
 
     @Override
-    public void onRequestSignatureResult(byte[] bytes) {
-
+    public void onRequestSignatureResult(final byte[] paras) {
+        logFlow("onRequestSignatureResult() called with: paras = [" + paras + "]");
     }
 
     @Override
-    public void onRequestCalculateMac(String s) {
-
+    public void onRequestCalculateMac(final String calMac) {
+        logFlow("onRequestCalculateMac() called with: calMac = [" + calMac + "]");
     }
 
     @Override
     public void onRequestUpdateWorkKeyResult(QPOSService.UpdateInformationResult updateInformationResult) {
-
+        logFlow("onRequestUpdateWorkKeyResult() called with: updateInformationResult = [" + updateInformationResult + "]");
     }
 
     @Override
-    public void onReturnCustomConfigResult(boolean isReturnedConfig, String sfinal) {
+    public void onReturnCustomConfigResult(final boolean isSuccess, final String result) {
+        logFlow("onReturnCustomConfigResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
         mQposServiceCallback.onReturnCustomConfigResult();
         mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
     }
 
     @Override
     public void onRequestSetPin() {
-
+        logFlow("onRequestSetPin() called");
     }
 
     @Override
-    public void onReturnSetMasterKeyResult(boolean b) {
-
+    public void onReturnSetMasterKeyResult(final boolean isSuccess) {
+        logFlow("onReturnSetMasterKeyResult() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
-    public void onRequestUpdateKey(String s) {
-
+    public void onRequestUpdateKey(final String result) {
+        logFlow("onRequestUpdateKey() called with: result = [" + result + "]");
     }
 
     @Override
-    public void onReturnUpdateIPEKResult(boolean b) {
-
+    public void onReturnUpdateIPEKResult(final boolean isSuccess) {
+        logFlow("onReturnUpdateIPEKResult() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
-    public void onReturnRSAResult(String s) {
-
+    public void onReturnRSAResult(final String isSuccess) {
+        logFlow("onReturnRSAResult() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
-    public void onReturnUpdateEMVResult(boolean isActualizado) {
-        Log.i(TAG, "Injectando Capacidades");
+    public void onReturnUpdateEMVResult(final boolean isSuccess) {
+        logFlow("onReturnUpdateEMVResult() called with: isSuccess = [" + isSuccess + "]");
 
         try {
             TimeUnit.SECONDS.sleep(1);
@@ -850,228 +889,266 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             Thread.currentThread().interrupt();
         }
 
-        if (isActualizado) {
+        if (isSuccess) {
             mPosService.setCardTradeMode(QPOSService.CardTradeMode.SWIPE_TAP_INSERT_CARD);
-            Log.i(TAG, "Iniciando Operación");
-
             mPosService.setOnlineTime(1000);
             mPosService.doCheckCard(30, 10);
         }
     }
 
     @Override
-    public void onReturnGetQuickEmvResult(boolean b) {
-
+    public void onReturnGetQuickEmvResult(final boolean isSuccess) {
+        logFlow("onReturnGetQuickEmvResult() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
-    public void onReturnGetEMVListResult(String s) {
-
+    public void onReturnGetEMVListResult(final String data) {
+        logFlow("onReturnGetEMVListResult() called with: data = [" + data + "]");
     }
 
     @Override
-    public void onReturnUpdateEMVRIDResult(boolean b) {
-
+    public void onReturnUpdateEMVRIDResult(final boolean isSuccess) {
+        logFlow("onReturnUpdateEMVRIDResult() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
-    public void onDeviceFound(BluetoothDevice bluetoothDevice) {
-
+    public void onDeviceFound(final BluetoothDevice bluetoothDevice) {
+        logFlow("onDeviceFound() called with: bluetoothDevice = [" + bluetoothDevice + "]");
     }
 
     @Override
-    public void onReturnBatchSendAPDUResult(LinkedHashMap<Integer, String> linkedHashMap) {
-
+    public void onReturnBatchSendAPDUResult(final LinkedHashMap<Integer, String> batchAPDUResult) {
+        logFlow("onReturnBatchSendAPDUResult() called with: batchAPDUResult = [" + batchAPDUResult + "]");
     }
 
     @Override
     public void onBluetoothBonding() {
-
+        logFlow("onBluetoothBonding() called");
     }
 
     @Override
     public void onBluetoothBonded() {
-
+        logFlow("onBluetoothBonded() called");
     }
 
     @Override
-    public void onWaitingforData(String s) {
-
+    public void onWaitingforData(final String pin) {
+        logFlow("onWaitingforData() called with: pin = [" + pin + "]");
     }
 
     @Override
     public void onBluetoothBondFailed() {
-
+        logFlow("onBluetoothBondFailed() called");
     }
 
     @Override
     public void onBluetoothBondTimeout() {
-
+        logFlow("onBluetoothBondTimeout() called");
     }
 
     @Override
-    public void onReturniccCashBack(Hashtable<String, String> hashtable) {
-
+    public void onReturniccCashBack(final Hashtable<String, String> result) {
+        logFlow("onReturniccCashBack() called with: result = [" + result + "]");
     }
 
     @Override
-    public void onLcdShowCustomDisplay(boolean b) {
-
+    public void onLcdShowCustomDisplay(final boolean isSuccess) {
+        logFlow("onLcdShowCustomDisplay() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
     public void onUpdatePosFirmwareResult(QPOSService.UpdateInformationResult updateInformationResult) {
-
+        logFlow("onUpdatePosFirmwareResult() called with: updateInformationResult = [" + updateInformationResult + "]");
     }
 
     @Override
-    public void onBluetoothBoardStateResult(boolean b) {
-
+    public void onBluetoothBoardStateResult(final boolean result) {
+        logFlow("onBluetoothBoardStateResult() called with: result = [" + result + "]");
     }
 
     @Override
-    public void onReturnDownloadRsaPublicKey(HashMap<String, String> hashMap) {
-
+    public void onReturnDownloadRsaPublicKey(final HashMap<String, String> hashMap) {
+        logFlow("onReturnDownloadRsaPublicKey() called with: hashMap = [" + hashMap + "]");
     }
 
     @Override
-    public void onGetPosComm(int i, String s, String s1) {
-
+    public void onGetPosComm(final int mod, final String amount, final String posid) {
+        logFlow("onGetPosComm() called with: mod = [" + mod + "], amount = [" + amount + "], posid = [" + posid + "]");
     }
 
     @Override
-    public void onUpdateMasterKeyResult(boolean b, Hashtable<String, String> hashtable) {
-
+    public void onUpdateMasterKeyResult(final boolean result, final Hashtable<String, String> resultTable) {
+        logFlow("onUpdateMasterKeyResult() called with: result = [" + result + "], resultTable = [" + resultTable + "]");
     }
 
     @Override
-    public void onPinKey_TDES_Result(String s) {
-
+    public void onPinKey_TDES_Result(final String result) {
+        logFlow("onPinKey_TDES_Result() called with: result = [" + result + "]");
     }
 
     @Override
-    public void onEmvICCExceptionData(String s) {
-
+    public void onEmvICCExceptionData(final String tlv) {
+        logFlow("onEmvICCExceptionData() called with: tlv = [" + tlv + "]");
     }
 
     @Override
-    public void onSetParamsResult(boolean b, Hashtable<String, Object> hashtable) {
-
+    public void onSetParamsResult(final boolean b, final Hashtable<String, Object> resultTable) {
+        logFlow("onSetParamsResult() called with: b = [" + b + "], resultTable = [" + resultTable + "]");
     }
 
     @Override
-    public void onGetInputAmountResult(boolean b, String s) {
-
+    public void onGetInputAmountResult(final boolean b, final String amount) {
+        logFlow("onGetInputAmountResult() called with: b = [" + b + "], amount = [" + amount + "]");
     }
 
     @Override
-    public void onReturnNFCApduResult(boolean b, String s, int i) {
-
+    public void onReturnNFCApduResult(final boolean result, final String apdu, final int apduLen) {
+        logFlow("onReturnNFCApduResult() called with: result = [" + result + "], apdu = [" + apdu + "], apduLen = [" + apduLen + "]");
     }
 
     @Override
-    public void onReturnPowerOnNFCResult(boolean b, String s, String s1, int i) {
-
+    public void onReturnPowerOnNFCResult(final boolean result, final String ksn, final String atr, final int atrLen) {
+        logFlow("onReturnPowerOnNFCResult() called with: result = [" + result + "], ksn = [" + ksn + "], atr = [" + atr + "], atrLen = [" + atrLen + "]");
     }
 
     @Override
-    public void onReturnPowerOffNFCResult(boolean b) {
-
+    public void onReturnPowerOffNFCResult(final boolean result) {
+        logFlow("onReturnPowerOffNFCResult() called with: result = [" + result + "]");
     }
 
     @Override
-    public void onCbcMacResult(String s) {
-
+    public void onCbcMacResult(final String result) {
+        logFlow("onCbcMacResult() called with: result = [" + result + "]");
     }
 
     @Override
-    public void onReadBusinessCardResult(boolean b, String s) {
-
+    public void onReadBusinessCardResult(final boolean b, final String result) {
+        logFlow("onReadBusinessCardResult() called with: b = [" + b + "], result = [" + result + "]");
     }
 
     @Override
     public void onWriteBusinessCardResult(boolean b) {
-
+        logFlow("onWriteBusinessCardResult() called with: b = [" + b + "]");
     }
 
     @Override
     public void onConfirmAmountResult(boolean b) {
-
+        logFlow("onConfirmAmountResult() called with: b = [" + b + "]");
     }
 
     @Override
     public void onSetManagementKey(boolean b) {
-
+        logFlow("onSetManagementKey() called with: b = [" + b + "]");
     }
 
     @Override
     public void onSetSleepModeTime(boolean b) {
-
+        logFlow("onSetSleepModeTime() called with: b = [" + b + "]");
     }
 
     @Override
-    public void onGetSleepModeTime(String s) {
-
+    public void onGetSleepModeTime(final String b) {
+        logFlow("onGetSleepModeTime() called with: b = [" + b + "]");
     }
 
     @Override
-    public void onGetShutDownTime(String s) {
-
+    public void onGetShutDownTime(final String b) {
+        logFlow("onGetShutDownTime() called with: b = [" + b + "]");
     }
 
     @Override
-    public void onEncryptData(String s) {
-
+    public void onEncryptData(final String b) {
+        logFlow("onEncryptData() called with: b = [" + b + "]");
     }
 
     @Override
     public void onAddKey(boolean b) {
-
+        logFlow("onAddKey() called with: b = [" + b + "]");
     }
 
     @Override
     public void onSetBuzzerResult(boolean b) {
-
+        logFlow("onSetBuzzerResult() called with: b = [" + b + "]");
     }
 
     @Override
     public void onSetBuzzerTimeResult(boolean b) {
-
+        logFlow("onSetBuzzerTimeResult() called with: b = [" + b + "]");
     }
 
     @Override
     public void onSetBuzzerStatusResult(boolean b) {
-
+        logFlow("onSetBuzzerStatusResult() called with: b = [" + b + "]");
     }
 
     @Override
-    public void onGetBuzzerStatusResult(String s) {
-
+    public void onGetBuzzerStatusResult(final String b) {
+        logFlow("onGetBuzzerStatusResult() called with: b = [" + b + "]");
     }
 
     @Override
-    public void onQposDoTradeLog(boolean b) {
-
+    public void onQposDoTradeLog(final boolean isSuccess) {
+        logFlow("onQposDoTradeLog() called with: isSuccess = [" + isSuccess + "]");
     }
 
     @Override
-    public void onQposDoGetTradeLogNum(String s) {
-
+    public void onQposDoGetTradeLogNum(final String data) {
+        logFlow("onQposDoGetTradeLogNum() called with: data = [" + data + "]");
     }
 
     @Override
-    public void onQposDoGetTradeLog(String s, String s1) {
-
+    public void onQposDoGetTradeLog(final String data, final String orderId) {
+        logFlow("onQposDoGetTradeLog() called with: data = [" + data + "], orderId = [" + orderId + "]");
     }
 
     @Override
     public void onRequestDevice() {
-
+        logFlow("onRequestDevice() called");
     }
 
     @Override
-    public void onGetKeyCheckValue(List<String> list) {
+    public void onGetKeyCheckValue(final List<String> checkValues) {
+        logFlow("onGetKeyCheckValue() called with: checkValues = [" + checkValues + "]");
+    }
 
+    @Override
+    public void onGetDevicePubKey(final String clearKeys) {
+        logFlow("onGetDevicePubKey() called with: clearKeys = [" + clearKeys + "]");
+    }
+
+    @Override
+    public void onSetPosBlePinCode(boolean b) {
+        logFlow("onSetPosBlePinCode() called with: b = [" + b + "]");
+    }
+
+    @Override
+    public void onTradeCancelled() {
+        logFlow("onTradeCancelled() called");
+    }
+
+    @Override
+    public void onReturnSetAESResult(final boolean isSuccess, final String result) {
+        logFlow("onReturnSetAESResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
+    }
+
+    @Override
+    public void onReturnAESTransmissonKeyResult(final boolean isSuccess, final String result) {
+        logFlow("onReturnAESTransmissonKeyResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
+    }
+
+    @Override
+    public void onReturnSignature(final boolean b, final String signaturedData) {
+        logFlow("onReturnSignature() called with: b = [" + b + "], signaturedData = [" + signaturedData + "]");
+    }
+
+    @Override
+    public void onReturnConverEncryptedBlockFormat(final String result) {
+        logFlow("onReturnConverEncryptedBlockFormat() called with: result = [" + result + "]");
+    }
+
+    @Override
+    public void onQposIsCardExistInOnlineProcess(final boolean haveCard) {
+        logFlow("onQposIsCardExistInOnlineProcess() called with: haveCard = [" + haveCard + "]");
     }
 
     private String setDecimalesAmount(final String monto) {
@@ -1106,5 +1183,15 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         //TODO Usar Libreria De Qpos
         return tags;
+    }
+
+    private void logFlow(String whatToLog) {
+        if (isLogEnabled) {
+            Log.d(TAG, whatToLog);
+        }
+    }
+
+    public void setLogEnabled(boolean logEnabled) {
+        isLogEnabled = logEnabled;
     }
 }
