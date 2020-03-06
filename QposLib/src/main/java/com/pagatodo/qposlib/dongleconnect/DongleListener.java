@@ -2,7 +2,9 @@ package com.pagatodo.qposlib.dongleconnect;
 
 
 import com.pagatodo.qposlib.pos.PosResult;
-
+import com.sunmi.pay.hardware.aidlv2.AidlConstantsV2;
+import com.sunmi.pay.hardware.aidlv2.bean.PinPadConfigV2;
+import com.sunmi.pay.hardware.aidlv2.pinpad.PinPadListenerV2;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -12,6 +14,10 @@ public interface DongleListener {
     void onResultData(final Hashtable<String, String> datosOperacion, DongleListener.DoTradeResult entryMode);
 
     void onRespuestaDongle(final PosResult result);
+
+    void onFindCard(final AidlConstantsV2.CardType cardType);
+
+    void onShowPinPad(PinPadListenerV2.Stub pinPadListener, PinPadConfigV2 pinPadConfig);
 
     void seleccionEmvApp(final List<String> listEMVApps, AplicacionEmv aplicacionEmv);
 
@@ -27,9 +33,9 @@ public interface DongleListener {
 
     void onErrorWriteMifareCard();
 
-    void  onFinishMifareCardResult(boolean finish);
+    void onFinishMifareCardResult(boolean finish);
 
-      enum DoTradeResult {
+    enum DoTradeResult {
         NONE,
         MCR,
         ICC,
@@ -41,7 +47,7 @@ public interface DongleListener {
         NFC_OFFLINE,
         NFC_DECLINED;
 
-         DoTradeResult() {
+        DoTradeResult() {
         }
     }
 }

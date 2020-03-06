@@ -18,6 +18,8 @@ public interface PosInterface {
 
     String getPosInfo();
 
+    void setFallBack(boolean isFallback);
+
     void getPin(final String maskedPAN);
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
@@ -26,7 +28,7 @@ public interface PosInterface {
 
     void cancelOperacion();
 
-    void operacionFinalizada(final String ARPC);
+    void operacionFinalizada(final String arpc, final int status);
 
     Map<String, String> getIccTags();
 
@@ -40,7 +42,10 @@ public interface PosInterface {
 
     int getUpdateProgress();
 
+
     QPOSDeviceInfo getDevicePosInfo();
+
+    byte[] onEncryptData(final byte[] bytes, final PosInterface.EncrypType type);
 
     /**
      * Tipo de Dispositivo
@@ -49,6 +54,12 @@ public interface PosInterface {
         DSPREAD,
         NODSPREAD,
         SUNMI
+    }
+
+    enum EncrypType {
+        TAGENCRYPT,
+        ICCENCRYPT,
+        PINENCRYPT
     }
 
 //    void doMifareCard(MifareCommand mifareCommand, int timeout);
