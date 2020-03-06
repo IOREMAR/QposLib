@@ -15,6 +15,7 @@ import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.PosInterface;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
+import com.pagatodo.qposlib.pos.ICCDecodeData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
 import com.pagatodo.qposlib.pos.PosResult;
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
@@ -72,6 +73,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
     private boolean isLogEnabled;
+    private Hashtable<String, String> mDecodeData;
 
     public interface QposServiceListener {
         void onQposIdResult(Hashtable<String, String> hashtable);
@@ -693,11 +695,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("deviceCancel() called");
         mPosService.close();
         closeCommunication();
-    }
-
-    @Override
-    public Hashtable<String, String> getQposIdHash() {
-        return null;
     }
 
     @Override
