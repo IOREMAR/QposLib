@@ -22,7 +22,10 @@ public interface PosInterface {
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
 
+    @Deprecated
     void doTransaccion(TransactionAmountData transactionAmountData);
+
+    void doTransaccion(TransactionAmountData transactionAmountData, int tradeMode);
 
     void cancelOperacion();
 
@@ -45,7 +48,7 @@ public interface PosInterface {
     /**
      * Tipo de Dispositivo
      */
-    public enum Tipodongle {
+    enum Tipodongle {
         DSPREAD,
         NODSPREAD,
         SUNMI
