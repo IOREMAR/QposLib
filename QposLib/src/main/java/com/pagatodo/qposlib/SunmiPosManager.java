@@ -36,6 +36,7 @@ import com.sunmi.pay.hardware.aidlv2.readcard.ReadCardOptV2;
 import com.sunmi.pay.hardware.aidlv2.security.SecurityOptV2;
 import com.sunmi.pay.hardware.aidlv2.system.BasicOptV2;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -272,6 +273,15 @@ public class SunmiPosManager extends AbstractDongle {
 
     @Override
     public void doTransaccion(TransactionAmountData transactionAmountData) {
+        //TODO validar operacion EMV, leer banda, leer chip
+        limpiarVariables();
+        initData(transactionAmountData.getCapacidades());
+        this.transactionAmountData = transactionAmountData;
+        startProcessEmv(transactionAmountData.getAmount());
+    }
+
+    @Override
+    public void doTransaccion(TransactionAmountData transactionAmountData, int tradeMode) {
         //TODO validar operacion EMV, leer banda, leer chip
         limpiarVariables();
         initData(transactionAmountData.getCapacidades());
@@ -695,7 +705,7 @@ public class SunmiPosManager extends AbstractDongle {
             pinPadConfig.setPinPadType(1);
             pinPadConfig.setPinType(mPinType);
             pinPadConfig.setOrderNumKey(true);
-            byte[] panBytes = mCardNo.substring(mCardNo.length() - 13, mCardNo.length() - 1).getBytes("US-ASCII");
+            byte[] panBytes = mCardNo.substring(mCardNo.length() - 13, mCardNo.length() - 1).getBytes(StandardCharsets.US_ASCII);
             pinPadConfig.setPan(panBytes);
             pinPadConfig.setTimeout(60 * 1000); // input password timeout
             pinPadConfig.setPinKeyIndex(11);    // pik index
