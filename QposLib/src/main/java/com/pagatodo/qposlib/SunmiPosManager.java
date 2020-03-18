@@ -235,6 +235,14 @@ public class SunmiPosManager extends AbstractDongle {
     }
 
     @Override
+    public void doTransaccion(TransactionAmountData transactionAmountData, int tradeMode) {
+        //TODO validar operacion EMV, leer banda, leer chip
+        initData(transactionAmountData.getCapacidades());
+        this.transactionAmountData = transactionAmountData;
+        startProcessEmv(transactionAmountData.getAmount());
+    }
+
+    @Override
     public Map<String, String> getIccTags() {
         return null;
     }
