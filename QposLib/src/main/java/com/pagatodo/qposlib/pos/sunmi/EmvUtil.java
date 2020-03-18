@@ -1,13 +1,13 @@
 package com.pagatodo.qposlib.pos.sunmi;
 
 import com.pagatodo.qposlib.PosInstance;
-import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.sunmi.pay.hardware.aidlv2.AidlConstantsV2;
 import com.sunmi.pay.hardware.aidlv2.bean.AidV2;
 import com.sunmi.pay.hardware.aidlv2.bean.CapkV2;
 import com.sunmi.pay.hardware.aidlv2.bean.EmvTermParamV2;
 import com.sunmi.pay.hardware.aidlv2.emv.EMVOptV2;
 import com.sunmi.pay.hardware.aidlv2.security.SecurityOptV2;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,8 +20,6 @@ import static com.pagatodo.qposlib.QPosManager.TERMINAL_CAPS;
 public final class EmvUtil {
 
     private static final String TAG = EmvUtil.class.getSimpleName();
-
-//    private static AbstractDongle abstractDongle = MposApplication.getInstance().getPreferedDongle();
 
     private EmvUtil() {
     }
@@ -45,8 +43,9 @@ public final class EmvUtil {
     public static void initKey(SecurityOptV2 mSecurityOptV2) {
         try {
 
+
             int result = mSecurityOptV2.savePlaintextKey(AidlConstantsV2.Security.KEY_TYPE_TDK,
-                    PosInstance.getInstance().getSessionKeys().get("plainDataKey").getBytes(),  PosInstance.getInstance().getSessionKeys().get("plainDataKcvKey").getBytes(),
+                    PosInstance.getInstance().getSunMIsessionKeys().get("plainDataKey"), PosInstance.getInstance().getSunMIsessionKeys().get("plainDataKcvKey"),
                     AidlConstantsV2.Security.KEY_ALG_TYPE_3DES, 10);
 //            AppLogger.LOGGER.fine(TAG, "save KEK result:" + result);
             if (result != 0) {
@@ -54,7 +53,7 @@ public final class EmvUtil {
                 return;
             }
 
-            result = mSecurityOptV2.savePlaintextKey(AidlConstantsV2.Security.KEY_TYPE_PIK, PosInstance.getInstance().getSessionKeys().get("plainPinkey").getBytes(), PosInstance.getInstance().getSessionKeys().get("plainPinKcvkey").getBytes(),
+            result = mSecurityOptV2.savePlaintextKey(AidlConstantsV2.Security.KEY_TYPE_PIK, PosInstance.getInstance().getSunMIsessionKeys().get("plainPinkey"), PosInstance.getInstance().getSunMIsessionKeys().get("plainPinKcvkey"),
                     AidlConstantsV2.Security.KEY_ALG_TYPE_3DES, 11);
 //            AppLogger.LOGGER.fine(TAG, "save KEK result:" + result);
             if (result != 0) {
@@ -237,6 +236,17 @@ public final class EmvUtil {
             capkV2.checkSum = ByteUtil.hexStr2Bytes(tlv.getValue());
         }
         return capkV2;
+    }
+
+    public static boolean requiredNip(final String serviceCode) {
+        return serviceCode.charAt(2) == '0' || serviceCode.charAt(2) == '3' || serviceCode.charAt(2) == '5' || serviceCode.charAt(2) == '6' || serviceCode.charAt(2) == '7';
+    }
+
+    public static boolean isChipcard(final String serviceCode) {
+        if (!serviceCode.isEmpty()) {
+            return serviceCode.charAt(0) == '2' || serviceCode.charAt(0) == '6';
+        }
+        return false;
     }
 
 }

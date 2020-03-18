@@ -13,6 +13,7 @@ import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
+import com.pagatodo.qposlib.dongleconnect.PosInterface;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
 import com.pagatodo.qposlib.pos.ICCDecodeData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
@@ -70,12 +71,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private QPOSDeviceInfo mQPosDeviceInfo;
     private QposServiceListener mQposServiceCallback;
     private QPOSService.DoTradeResult mCurrentTradeResult;
-    private Hashtable<String, String> mDecodeData;
+    private Hashtable<String, String> decodeData;
     private ArrayList<String> mListCapabilities;
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
     private QPOSService.CardTradeMode cardTradeMode;
     private boolean isLogEnabled;
+    private Hashtable<String, String> mDecodeData;
 
     public interface QposServiceListener {
         void onQposIdResult(Hashtable<String, String> hashtable);
@@ -193,6 +195,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public String getPosInfo() {
         logFlow("getPosInfo() returned: " + null);
         return null;
+    }
+
+    @Override
+    public void setFallBack(boolean isFallback) {
+
     }
 
     @Override
@@ -372,6 +379,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.resetQPOS();
     }
 
+    @Override
+    public void operacionFinalizada(String arpc, int status) {
+
+    }
+
     public void operacionFinalizada(String arpc) {
         logFlow("operacionFinalizada() called with: arpc = [" + arpc + "]");
         mPosService.sendOnlineProcessResult(arpc);
@@ -395,6 +407,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public QPOSDeviceInfo getDevicePosInfo() {
         logFlow("getDevicePosInfo() returned: " + mQPosDeviceInfo);
         return mQPosDeviceInfo;
+    }
+
+    @Override
+    public byte[] onEncryptData(byte[] bytes, EncrypType type) {
+        return bytes;
     }
 
     public void generateSessionKeys() {
@@ -540,6 +557,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mQPosDeviceInfo.setIsUsbConnected(posInfoData.get("isUsbConnected"));
 
         dongleConnect.onDeviceConnected();
+//        mPosService.generateSessionKeys();
     }
 
     @Override
@@ -571,7 +589,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (!isSetRSA) {
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Clave RSA No Cargada", false));
         } else {
-            mPosService.generateSessionKeys();
+            mPosService.getQposId();
         }
     }
 
@@ -785,7 +803,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onRequestQposConnected() {
         logFlow("onRequestQposConnected() called");
         mQStatePOS.updateState(POSConnectionState.STATE_POS.CONNECTED);
-        mPosService.getQposId();
+        mPosService.getQposInfo();
     }
 
     @Override
@@ -809,7 +827,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onError(QPOSService.Error error) {
         logFlow("onError() called with: error = [" + error + "]");
         this.cancelOperacion();
-        if (mDecodeData != null) {
+        if (decodeData != null) {
             mPosService.resetQPOS();
 
             switch (error) {
@@ -829,7 +847,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     // NONE
                     break;
                 case DEVICE_RESET:
-                    if (transactionAmountData == null && mDecodeData != null) {
+                    if (transactionAmountData == null && decodeData != null) {
                         dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
                     }
                     break;

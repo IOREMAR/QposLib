@@ -3,14 +3,17 @@ package com.pagatodo.qposlib.dongleconnect;
 import android.util.ArrayMap;
 
 import com.dspread.xpos.QPOSService;
+import com.pagatodo.qposlib.pos.sunmi.Constants;
+import com.pagatodo.qposlib.pos.sunmi.EmvUtil;
 
+import java.util.List;
 import java.util.Map;
 
 public class TransactionAmountData {
 
     private String nameProduct;
     private String pathIcon;
-    private String amount;
+    private String amount = "000";
     private String cashbackAmount;
     private String currencyCode;
     private String transactionType;
@@ -24,6 +27,12 @@ public class TransactionAmountData {
     private String comision;
     private String codigoPostal;
     private String AmountIcon;
+    private List<String> tags;
+    private Constants.TransType transType = Constants.TransType.PURCHASE;
+
+    public TransactionAmountData() {
+        //Empty constructor
+    }
 
     public String getAmountIcon() {
         return AmountIcon;
@@ -41,7 +50,7 @@ public class TransactionAmountData {
         this.capacidades = capacidades;
     }
 
-    private Map<String,String> capacidades =  new ArrayMap<>();
+    private Map<String, String> capacidades = new ArrayMap<>();
 
     public String getTipoOperacion() {
         return tipoOperacion;
@@ -49,11 +58,6 @@ public class TransactionAmountData {
 
     public void setTipoOperacion(final String tipoOperacion) {
         this.tipoOperacion = tipoOperacion;
-    }
-
-    public TransactionAmountData() {
-
-        //Empty constructor
     }
 
     public String getAmount() {
@@ -92,8 +96,16 @@ public class TransactionAmountData {
         }
     }
 
+    public Constants.TransType getTransType() {
+        return this.transType;
+    }
+
     public void setTransactionType(final String transactionType) {
         this.transactionType = transactionType;
+    }
+
+    public void setTransType(final Constants.TransType transactionType) {
+        this.transType = transactionType;
     }
 
     public String getNameProduct() {
@@ -167,5 +179,13 @@ public class TransactionAmountData {
 
     public void setCodigoPostal(final String codigoPostal) {
         this.codigoPostal = codigoPostal;
+    }
+
+    public void setSunmiCapacidades(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public List<String> getSunmiCapacidades() {
+        return tags;
     }
 }

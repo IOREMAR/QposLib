@@ -17,6 +17,7 @@ public class PosInstance {
     private Context AppContext;
 
     private Hashtable<String, String> sessionKeys;
+    private Hashtable<String, byte[]> sunMIsessionKeys;
 
     private String ColorTema ;
 
@@ -59,5 +60,13 @@ public class PosInstance {
 
     public void setSessionKeys(Hashtable<String, String> sessionKeys) {
         this.sessionKeys = sessionKeys;
+    }
+
+    public Hashtable<String, byte[]> getSunMIsessionKeys() {
+        return sunMIsessionKeys;
+    }
+
+    public void setSunMIsessionKeys(Hashtable<String, byte[]> sunMIsessionKeys) {
+        this.sunMIsessionKeys = sunMIsessionKeys;
     }
 }
