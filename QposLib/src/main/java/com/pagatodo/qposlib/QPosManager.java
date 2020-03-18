@@ -58,6 +58,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public static final String CVM_LIMIT = "CVM_LIMIT";
     public static final String REQUIERE_PIN = "INGRESE PIN";
     private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07"};
+    public static final int MODE_ICC = 422;
+    public static final int MODE_NFC = 632;
+    public static final int MODE_MS = 67;
     /*Variables
      */
 
@@ -71,6 +74,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private ArrayList<String> mListCapabilities;
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
+    private QPOSService.CardTradeMode cardTradeMode;
     private boolean isLogEnabled;
 
     public interface QposServiceListener {
@@ -238,6 +242,52 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         } else {
             onRequestQposDisconnected();
+        }
+    }
+
+    @Override
+    public void doTransaccion(TransactionAmountData transactionAmountData, int tradeMode) {
+        logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "], tradeMode = [" + tradeMode + "]");
+
+        if (!mPosService.isQposPresent()) {
+            onRequestQposDisconnected();
+        } else {
+            mListCapabilities = new ArrayList<>();
+
+            setListCapabillities(transactionAmountData.getCapacidades());
+
+            if (transactionAmountData.getTipoOperacion().equals("D")) {
+                mPosService.setQuickEmv(true);
+            } else {
+                if (transactionAmountData.getAmountIcon().equals("")) {
+                    mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
+                } else {
+                    mPosService.setQuickEmv(true);
+                }
+            }
+
+            mPosService.setFormatId("0025");
+            this.transactionAmountData = transactionAmountData;
+
+            final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
+            logFlow("doTransaccion: listCap = " + lisCap);
+
+            if (tradeMode == (MODE_ICC | MODE_NFC)) {
+                cardTradeMode = QPOSService.CardTradeMode.TAP_INSERT_CARD;
+            } else if (tradeMode == (MODE_ICC | MODE_MS)) {
+                cardTradeMode = QPOSService.CardTradeMode.SWIPE_INSERT_CARD;
+            } else if (tradeMode == (MODE_ICC)) {
+                cardTradeMode = QPOSService.CardTradeMode.ONLY_INSERT_CARD;
+            } else if (tradeMode == (MODE_NFC)) {
+                cardTradeMode = QPOSService.CardTradeMode.ONLY_TAP_CARD;
+            } else if (tradeMode == (MODE_MS)) {
+                cardTradeMode = QPOSService.CardTradeMode.ONLY_SWIPE_CARD;
+            } else {
+                // (MODE_NFC | MODE_MS) is not supported
+                cardTradeMode = QPOSService.CardTradeMode.SWIPE_TAP_INSERT_CARD;
+            }
+
+            mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         }
     }
 
@@ -890,8 +940,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
 
         if (isSuccess) {
-            mPosService.setCardTradeMode(QPOSService.CardTradeMode.SWIPE_TAP_INSERT_CARD);
+
             mPosService.setOnlineTime(1000);
+            mPosService.setCardTradeMode(cardTradeMode);
             mPosService.doCheckCard(30, 10);
         }
     }
