@@ -793,10 +793,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onError(QPOSService.Error error) {
         logFlow("onError() called with: error = [" + error + "]");
-        this.cancelOperacion();
-        if (mDecodeData != null) {
-            mPosService.resetQPOS();
 
+        this.cancelOperacion();
+
+        if (mDecodeData != null) {
             switch (error) {
                 case TIMEOUT:
                     onRequestNoQposDetected();
@@ -804,11 +804,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 case CMD_TIMEOUT:
                 case CMD_NOT_AVAILABLE:
                     dongleConnect.onRequestNoQposDetected();
-//                    .onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TIMEOUT, error.name(), false));
                     break;
                 case INPUT_INVALID:
                     dongleConnect.onRequestNoQposDetected();
-//                    dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.INPUT_INVALID, error.name(), false));
                     break;
                 case UNKNOWN:
                     // NONE
@@ -820,9 +818,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     break;
                 default:
                     dongleConnect.onRequestNoQposDetected();
-//                    dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
                     break;
             }
+        } else if (error == QPOSService.Error.CMD_TIMEOUT) {
+            PosResult posResult = new PosResult(PosResult.PosTransactionResult.CMD_TIEMPOFINALIZADO,
+                    "No se detectó la tarjeta",
+                    false);
+            dongleListener.onRespuestaDongle(posResult);
         }
     }
 
@@ -925,7 +927,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
 
         if (isSuccess) {
-
             mPosService.setOnlineTime(1000);
             mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
             mPosService.doCheckCard(30, 10);
