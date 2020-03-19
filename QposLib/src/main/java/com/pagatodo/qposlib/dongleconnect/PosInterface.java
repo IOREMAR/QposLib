@@ -3,6 +3,7 @@ package com.pagatodo.qposlib.dongleconnect;
 import android.content.Context;
 
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
+import com.pagatodo.qposlib.pos.QposParameters;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
 
 import java.util.Hashtable;
@@ -25,7 +26,7 @@ public interface PosInterface {
     @Deprecated
     void doTransaccion(TransactionAmountData transactionAmountData);
 
-    void doTransaccion(TransactionAmountData transactionAmountData, int tradeMode);
+    void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
     void cancelOperacion();
 
@@ -48,7 +49,7 @@ public interface PosInterface {
     /**
      * Tipo de Dispositivo
      */
-    public enum Tipodongle {
+    enum Tipodongle {
         DSPREAD,
         NODSPREAD,
         SUNMI

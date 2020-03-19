@@ -18,6 +18,7 @@ import com.pagatodo.qposlib.pos.ICCDecodeData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
 import com.pagatodo.qposlib.pos.PosResult;
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
+import com.pagatodo.qposlib.pos.QposParameters;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
 import com.pagatodo.qposlib.pos.dspread.POSBluetoothDevice;
 
@@ -58,9 +59,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public static final String CVM_LIMIT = "CVM_LIMIT";
     public static final String REQUIERE_PIN = "INGRESE PIN";
     private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07"};
-    public static final int MODE_ICC = 422;
-    public static final int MODE_NFC = 632;
-    public static final int MODE_MS = 67;
+
     /*Variables
      */
 
@@ -74,7 +73,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private ArrayList<String> mListCapabilities;
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
-    private QPOSService.CardTradeMode cardTradeMode;
+    private QposParameters qposParameters;
     private boolean isLogEnabled;
 
     public interface QposServiceListener {
@@ -246,8 +245,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void doTransaccion(TransactionAmountData transactionAmountData, int tradeMode) {
-        logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "], tradeMode = [" + tradeMode + "]");
+    public void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters) {
+        logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "], qposParameters = [" + qposParameters + "]");
 
         if (!mPosService.isQposPresent()) {
             onRequestQposDisconnected();
@@ -272,21 +271,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
             logFlow("doTransaccion: listCap = " + lisCap);
 
-            if (tradeMode == (MODE_ICC | MODE_NFC)) {
-                cardTradeMode = QPOSService.CardTradeMode.TAP_INSERT_CARD;
-            } else if (tradeMode == (MODE_ICC | MODE_MS)) {
-                cardTradeMode = QPOSService.CardTradeMode.SWIPE_INSERT_CARD;
-            } else if (tradeMode == (MODE_ICC)) {
-                cardTradeMode = QPOSService.CardTradeMode.ONLY_INSERT_CARD;
-            } else if (tradeMode == (MODE_NFC)) {
-                cardTradeMode = QPOSService.CardTradeMode.ONLY_TAP_CARD;
-            } else if (tradeMode == (MODE_MS)) {
-                cardTradeMode = QPOSService.CardTradeMode.ONLY_SWIPE_CARD;
-            } else {
-                // (MODE_NFC | MODE_MS) is not supported
-                cardTradeMode = QPOSService.CardTradeMode.SWIPE_TAP_INSERT_CARD;
-            }
-
+            this.qposParameters = qposParameters;
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         }
     }
@@ -484,9 +469,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mListCapabilities.add(EmvAppTag.Terminal_Country_Code + capabillities.get(COUNTRY_CODE));
         mListCapabilities.add(EmvAppTag.terminal_execute_cvm_limit + capabillities.get(CVM_LIMIT));
 
-        mListCapabilities.add(EmvAppTag.terminal_contactless_offline_floor_limit + "000007D0");
-        mListCapabilities.add(EmvAppTag.terminal_contactless_transaction_limit + "000000080000");
-        mListCapabilities.add(EmvAppTag.Contactless_CVM_Required_limit + "000000002001");
+        mListCapabilities.add(EmvAppTag.terminal_contactless_offline_floor_limit + qposParameters.getCtlsTransactionFloorLimitValue());
+        mListCapabilities.add(EmvAppTag.terminal_contactless_transaction_limit + qposParameters.getCtlsTransactionLimitValue());
+        mListCapabilities.add(EmvAppTag.Contactless_CVM_Required_limit + qposParameters.getCtlsTransactionCvmLimitValue());
     }
 
     public void getPosServicePin(String maskedPAN, String dateforTRX) {
@@ -942,7 +927,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (isSuccess) {
 
             mPosService.setOnlineTime(1000);
-            mPosService.setCardTradeMode(cardTradeMode);
+            mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
             mPosService.doCheckCard(30, 10);
         }
     }
