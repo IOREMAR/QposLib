@@ -15,6 +15,7 @@ import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
 import com.pagatodo.qposlib.pos.PosResult;
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
+import com.pagatodo.qposlib.pos.QposParameters;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
 import com.pagatodo.qposlib.pos.sunmi.ByteUtil;
 import com.pagatodo.qposlib.pos.sunmi.EmvUtil;
@@ -34,6 +35,7 @@ import com.sunmi.pay.hardware.aidlv2.readcard.ReadCardOptV2;
 import com.sunmi.pay.hardware.aidlv2.security.SecurityOptV2;
 import com.sunmi.pay.hardware.aidlv2.system.BasicOptV2;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -235,7 +237,7 @@ public class SunmiPosManager extends AbstractDongle {
     }
 
     @Override
-    public void doTransaccion(TransactionAmountData transactionAmountData, int tradeMode) {
+    public void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters) {
         //TODO validar operacion EMV, leer banda, leer chip
         initData(transactionAmountData.getCapacidades());
         this.transactionAmountData = transactionAmountData;
@@ -569,7 +571,7 @@ public class SunmiPosManager extends AbstractDongle {
             pinPadConfig.setPinType(mPinType);
             pinPadConfig.setOrderNumKey(true);
 //            byte[] panBytes = mCardNo.getBytes(StandardCharsets.US_ASCII);
-            byte[] panBytes = mCardNo.substring(mCardNo.length() - 13, mCardNo.length() - 1).getBytes("US-ASCII");
+            byte[] panBytes = mCardNo.substring(mCardNo.length() - 13, mCardNo.length() - 1).getBytes(StandardCharsets.US_ASCII);
             pinPadConfig.setPan(panBytes);
             pinPadConfig.setTimeout(60 * 1000); // input password timeout
             pinPadConfig.setPinKeyIndex(11);    // pik index
