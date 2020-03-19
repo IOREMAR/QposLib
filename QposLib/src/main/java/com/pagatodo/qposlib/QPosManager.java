@@ -252,6 +252,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             onRequestQposDisconnected();
         } else {
             mListCapabilities = new ArrayList<>();
+            this.qposParameters = qposParameters;
 
             setListCapabillities(transactionAmountData.getCapacidades());
 
@@ -271,7 +272,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
             logFlow("doTransaccion: listCap = " + lisCap);
 
-            this.qposParameters = qposParameters;
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         }
     }
