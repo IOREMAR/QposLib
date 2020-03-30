@@ -13,7 +13,6 @@ import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
-import com.pagatodo.qposlib.dongleconnect.PosInterface;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
 import com.pagatodo.qposlib.pos.PosResult;
@@ -170,6 +169,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public boolean requestQuotas() {
+        return false;
+    }
+
+    @Override
     public void setFallBack(boolean isFallback) {
 
     }
@@ -184,7 +188,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         try {
             mPosService.updateRSA(getPublicKey(clavePublicaFile, context), clavePublicaFile);
         } catch (Exception exe) {
-
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Llave No Generada", false));
         }
     }
@@ -193,11 +196,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void doTransaccion(TransactionAmountData transactionAmountData) {
 
         if (mPosService.isQposPresent()) {
-
             mListCapabilities = new ArrayList<>();
-
             setListCapabillities(transactionAmountData.getCapacidades());
-
             if (transactionAmountData.getTipoOperacion().equals("D")) {
                 mPosService.setQuickEmv(true);
             } else {
@@ -209,12 +209,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             }
 
             mPosService.setFormatId("0025");
-
             this.transactionAmountData = transactionAmountData;
 
             final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
             Log.i(TAG, lisCap);
-
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         } else {
             onRequestQposDisconnected();
