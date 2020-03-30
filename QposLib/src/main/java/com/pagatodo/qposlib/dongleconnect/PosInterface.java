@@ -18,6 +18,8 @@ public interface PosInterface {
 
     String getPosInfo();
 
+    boolean requestQuotas();
+
     void setFallBack(boolean isFallback);
 
     void getPin(final String maskedPAN);

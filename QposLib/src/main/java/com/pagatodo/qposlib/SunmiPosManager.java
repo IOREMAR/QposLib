@@ -57,7 +57,6 @@ public class SunmiPosManager extends AbstractDongle {
 
     public static final String TAG = SunmiPosManager.class.getSimpleName();
     private SunmiPayKernel mSMPayKernel;
-
     public static BasicOptV2 mBasicOptV2;
     public static ReadCardOptV2 mReadCardOptV2;
     public static PinPadOptV2 mPinPadOptV2;
@@ -73,10 +72,12 @@ public class SunmiPosManager extends AbstractDongle {
     private int mAppSelect;
     private boolean fallbackActivado = false;
     private int mPinType;   // 0-online pin, 1-offline pin
+    //Validación para quotas.
+    private boolean isRequestPin = false;
+    private boolean isRequestSignature = false;
 
     private String track1 = "";
     private String track2 = "";
-
     private TransactionAmountData transactionAmountData;
 
     public SunmiPosManager(DongleConnect listener) {
@@ -153,14 +154,13 @@ public class SunmiPosManager extends AbstractDongle {
 
     public void checkCard() {
         try {
-            int mCardType = AidlConstantsV2.CardType.MAGNETIC.getValue() | AidlConstantsV2.CardType.IC.getValue() | AidlConstantsV2.CardType.NFC.getValue();
-            mReadCardOptV2.checkCard(mCardType, mCheckCardCallback, 60);
+            mReadCardOptV2.checkCard(dongleListener.getCheckCardType(), mCheckCardCallback, 60);
         } catch (Exception exe) {
-            cancelprocess();
+            cancelProcess();
         }
     }
 
-    private void cancelprocess() {
+    private void cancelProcess() {
         try {
             mReadCardOptV2.cardOff(AidlConstantsV2.CardType.NFC.getValue());
             mReadCardOptV2.cancelCheckCard();
@@ -182,7 +182,7 @@ public class SunmiPosManager extends AbstractDongle {
             bundle.putInt("cardType", mCardType);
             mEMVOptV2.transactProcessEx(bundle, mEMVListener);
         } catch (Exception exe) {
-            cancelprocess();
+            cancelProcess();
         }
     }
 
@@ -247,10 +247,8 @@ public class SunmiPosManager extends AbstractDongle {
         return resultData;
     }
 
-
     @Override
     public void openCommunication() {
-
     }
 
     @Override
@@ -262,12 +260,10 @@ public class SunmiPosManager extends AbstractDongle {
 
     @Override
     public void resetQPOS() {
-
     }
 
     @Override
     public void getSessionKeys(String clavePublicaFile, Context context) {
-
     }
 
     @Override
@@ -287,6 +283,11 @@ public class SunmiPosManager extends AbstractDongle {
     @Override
     public String getPosInfo() {
         return null;
+    }
+
+    @Override
+    public boolean requestQuotas() {
+        return isRequestPin || isRequestSignature;
     }
 
     @Override
@@ -377,7 +378,7 @@ public class SunmiPosManager extends AbstractDongle {
                 Hashtable<String, String> dataCard = getDataOpTarjeta(bundle);
                 if (EmvUtil.isChipcard(Objects.requireNonNull(dataCard.get(Constants.serviceCode))) && !fallbackActivado) {//Tarjeta por chip no fallback
                     dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP.result, "Ingrese la Tarjeta por el Chip o Utilice Otra Tarjeta"));
-                    cancelprocess();
+                    cancelProcess();
                 } else {
                     if (EmvUtil.requiredNip(Objects.requireNonNull(dataCard.get(Constants.serviceCode))))
                         initPinPad(dataCard);
@@ -515,18 +516,18 @@ public class SunmiPosManager extends AbstractDongle {
         @Override
         public void onRequestShowPinPad(int pinType, int remainTime) throws RemoteException {
             mPinType = pinType;
+            isRequestPin = true;
             initPinPad(null);
         }
 
         @Override
         public void onRequestSignature() throws RemoteException {
+            isRequestSignature = true;
             mEMVOptV2.importSignatureStatus(0);
-
         }
 
         @Override
         public void onCertVerify(int i, String s) throws RemoteException {
-
         }
 
         @Override
