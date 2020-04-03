@@ -694,7 +694,7 @@ public class SunmiPosManager extends AbstractDongle {
         try {
             PinPadConfigV2 pinPadConfig = new PinPadConfigV2();
             pinPadConfig.setPinPadType(1);
-            pinPadConfig.setPinType(mPinType);
+            pinPadConfig.setPinType(0);
             pinPadConfig.setOrderNumKey(true);
             byte[] panBytes = mCardNo.substring(mCardNo.length() - 13, mCardNo.length() - 1).getBytes("US-ASCII");
             pinPadConfig.setPan(panBytes);
