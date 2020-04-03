@@ -594,7 +594,7 @@ public class SunmiPosManager extends AbstractDongle {
         hexStrPin = null;
         amount = "";
         mAppSelect = 0;
-        mPinType = 2;   // 0-online pin, 1-offline pin
+        mPinType = 0;   // 0-online pin, 1-offline pin
         track1 = "";
         track2 = "";
     }
