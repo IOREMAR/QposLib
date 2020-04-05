@@ -7,6 +7,7 @@ import android.os.Parcelable;
 import android.util.ArrayMap;
 import android.util.Log;
 
+import com.bbpos.bbdevice.BBDeviceController;
 import com.dspread.xpos.EmvAppTag;
 import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
@@ -1214,11 +1215,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         final Integer emvLength = Integer.valueOf(TAGSEMV.length);
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
-        if (tags.get("tlv").isEmpty()) {
-            tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
+        if (tags.containsKey("tlv")) {
+            String iccTlv = tags.get("tlv");
+            tags.putAll(BBDeviceController.decodeTlv(iccTlv));
         }
 
-        //TODO Usar Libreria De Qpos
         return tags;
     }
 
