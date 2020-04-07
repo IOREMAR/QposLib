@@ -1,8 +1,7 @@
 package com.pagatodo.qposlib.dongleconnect;
 
-
+import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.pos.PosResult;
-
 
 import java.util.Hashtable;
 import java.util.List;
@@ -27,9 +26,13 @@ public interface DongleListener {
 
     void onErrorWriteMifareCard();
 
-    void  onFinishMifareCardResult(boolean finish);
+    void onPosFirmwareUpdated();
 
-      enum DoTradeResult {
+    void onPosFirmwareUpdatedFailed(QPOSService.UpdateInformationResult updateResult);
+
+    void onFinishMifareCardResult(boolean finish);
+
+    enum DoTradeResult {
         NONE,
         MCR,
         ICC,
@@ -41,7 +44,7 @@ public interface DongleListener {
         NFC_OFFLINE,
         NFC_DECLINED;
 
-         DoTradeResult() {
+        DoTradeResult() {
         }
     }
 }

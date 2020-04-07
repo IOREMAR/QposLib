@@ -3,13 +3,8 @@ package com.pagatodo.qposlib.abstracts;
 import com.pagatodo.qposlib.QPosManager;
 import com.pagatodo.qposlib.SunmiPosManager;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
-
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.PosInterface;
-
-
-import static com.pagatodo.qposlib.dongleconnect.PosInterface.Tipodongle.DSPREAD;
-
 
 public abstract class AbstractDongle implements PosInterface {
 
@@ -30,8 +25,7 @@ public abstract class AbstractDongle implements PosInterface {
         this.dongleListener = dongleListener;
     }
 
-
-    public void setDongleConnect (final DongleConnect connect){
+    public void setDongleConnect(final DongleConnect connect) {
         dongleConnect = connect;
     }
 
