@@ -75,6 +75,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
     private QposParameters qposParameters;
+    private boolean isUpdatingFirmware;
     private boolean isLogEnabled;
 
     public interface QposServiceListener {
@@ -344,7 +345,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public int updateFirmware(byte[] dataToUpdate, String file) {
-        return mPosService.updatePosFirmware(dataToUpdate, file);
+        int result = mPosService.updatePosFirmware(dataToUpdate, file);
+        if (result == 0) {
+            isUpdatingFirmware = true;
+        }
+
+        logFlow("updateFirmware() returned: " + result);
+        return result;
     }
 
     public int getUpdateProgress() {
@@ -370,11 +377,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public DspreadDevicePOS getDeviePos() {
-        logFlow("getDeviePos() returned: " + null);
-        return null;
-    }
-
-    public DspreadDevicePOS getDevicePos() {
+        logFlow("getDeviePos() returned: " + mDevice);
         return mDevice;
     }
 
@@ -797,7 +800,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         this.cancelOperacion();
 
-        if (mDecodeData != null) {
+        if (isUpdatingFirmware) {
+            isUpdatingFirmware = false;
+            firmwareUpdate.onPosFirmwareUpdatedFailed(error.name());
+        } else if (mDecodeData != null) {
             switch (error) {
                 case TIMEOUT:
                     onRequestNoQposDetected();
@@ -998,8 +1004,15 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onUpdatePosFirmwareResult(QPOSService.UpdateInformationResult updateInformationResult) {
-        logFlow("onUpdatePosFirmwareResult() called with: updateInformationResult = [" + updateInformationResult + "]");
+    public void onUpdatePosFirmwareResult(QPOSService.UpdateInformationResult result) {
+        logFlow("onUpdatePosFirmwareResult() called with: result = [" + result + "]");
+        isUpdatingFirmware = false;
+
+        if (result == QPOSService.UpdateInformationResult.UPDATE_SUCCESS) {
+            firmwareUpdate.onPosFirmwareUpdated();
+        } else {
+            firmwareUpdate.onPosFirmwareUpdatedFailed(result.name());
+        }
     }
 
     @Override

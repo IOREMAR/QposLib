@@ -1,8 +1,6 @@
 package com.pagatodo.qposlib.dongleconnect;
 
-
 import com.pagatodo.qposlib.pos.PosResult;
-
 
 import java.util.Hashtable;
 import java.util.List;
