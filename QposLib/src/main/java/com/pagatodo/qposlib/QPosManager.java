@@ -930,7 +930,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (isSuccess) {
             mPosService.setOnlineTime(1000);
             mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
-            mPosService.doCheckCard(30, 10);
+            if (dongleListener.checkDoTrade())
+                mPosService.doTrade(30, 10);
+            else
+                mPosService.doCheckCard(30, 10);
         }
     }
 

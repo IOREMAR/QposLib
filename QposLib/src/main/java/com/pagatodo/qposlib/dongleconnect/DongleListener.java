@@ -17,6 +17,8 @@ public interface DongleListener {
 
     void onSearchMifareCardResult(final Hashtable<String, String> hashtable);//NOSONAR
 
+    boolean checkDoTrade();
+
     void onBatchReadMifareCardResult(String s, Hashtable<String, List<String>> hashtable);//NOSONAR
 
     void onBatchWriteMifareCardResult(String s, Hashtable<String, List<String>> hashtable);//NOSONAR
@@ -27,9 +29,9 @@ public interface DongleListener {
 
     void onErrorWriteMifareCard();
 
-    void  onFinishMifareCardResult(boolean finish);
+    void onFinishMifareCardResult(boolean finish);
 
-      enum DoTradeResult {
+    enum DoTradeResult {
         NONE,
         MCR,
         ICC,
@@ -41,7 +43,7 @@ public interface DongleListener {
         NFC_OFFLINE,
         NFC_DECLINED;
 
-         DoTradeResult() {
+        DoTradeResult() {
         }
     }
 }
