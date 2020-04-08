@@ -999,9 +999,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onUpdatePosFirmwareResult() called with: result = [" + result + "]");
 
         if (result == QPOSService.UpdateInformationResult.UPDATE_SUCCESS) {
-            dongleListener.onPosFirmwareUpdated();
+            firmwareUpdate.onPosFirmwareUpdated();
         } else {
-            dongleListener.onPosFirmwareUpdatedFailed(result);
+            firmwareUpdate.onPosFirmwareUpdatedFailed(result.name());
         }
     }
 

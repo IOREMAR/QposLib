@@ -1,6 +1,5 @@
 package com.pagatodo.qposlib.dongleconnect;
 
-import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.pos.PosResult;
 
 import java.util.Hashtable;
@@ -25,10 +24,6 @@ public interface DongleListener {
     void onOperateMifareCardResult(final Hashtable<String, String> hashtable);//NOSONAR
 
     void onErrorWriteMifareCard();
-
-    void onPosFirmwareUpdated();
-
-    void onPosFirmwareUpdatedFailed(QPOSService.UpdateInformationResult updateResult);
 
     void onFinishMifareCardResult(boolean finish);
 

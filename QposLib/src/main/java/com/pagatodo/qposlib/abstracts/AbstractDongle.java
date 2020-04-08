@@ -4,10 +4,11 @@ import com.pagatodo.qposlib.QPosManager;
 import com.pagatodo.qposlib.SunmiPosManager;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
+import com.pagatodo.qposlib.dongleconnect.FirmwareUpdateListener;
 import com.pagatodo.qposlib.dongleconnect.PosInterface;
 
 public abstract class AbstractDongle implements PosInterface {
-
+    protected FirmwareUpdateListener firmwareUpdate;
     protected DongleListener dongleListener;
     protected DongleConnect dongleConnect;
 
@@ -27,6 +28,10 @@ public abstract class AbstractDongle implements PosInterface {
 
     public void setDongleConnect(final DongleConnect connect) {
         dongleConnect = connect;
+    }
+
+    public void setFirmwareUpdate(final FirmwareUpdateListener firmwareUpdate) {
+        this.firmwareUpdate = firmwareUpdate;
     }
 
     public AbstractDongle getQpos(final PosInterface.Tipodongle tipodongle) {
