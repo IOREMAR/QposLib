@@ -780,7 +780,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestQposDisconnected() {
         logFlow("onRequestQposDisconnected() called");
-        dongleConnect.ondevicedisconnected();
+
+        // TODO: This method is also called just before updating the firmware
+        if (!isUpdatingFirmware) {
+            dongleConnect.ondevicedisconnected();
+        }
     }
 
     @Override
