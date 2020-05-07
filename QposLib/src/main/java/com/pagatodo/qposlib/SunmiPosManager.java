@@ -59,7 +59,6 @@ public class SunmiPosManager extends AbstractDongle {
     public static String TRANSACTION_LIMIT_CTLS = "TRANSACTION_LIMIT_CTLS";
     public static String CVM_REQUIRED_LIMIT = "CVM_REQUIRED_LIMI";
 
-    private static SunmiPosManager instance = null;
     public static final String TAG = SunmiPosManager.class.getSimpleName();
     private SunmiPayKernel mSMPayKernel;
     public static BasicOptV2 mBasicOptV2;
@@ -84,6 +83,12 @@ public class SunmiPosManager extends AbstractDongle {
     private String track2 = "";
     private TransactionAmountData transactionAmountData;
     private DongleListener.DoTradeResult tradeResult;
+
+    public SunmiPosManager(DongleConnect listener) {
+        super(listener);
+        this.setPosSunmi(this);
+        connectPayService();
+    }
 
     @Override
     public void setFallBack(boolean isFallback) {
