@@ -17,6 +17,8 @@ public interface DongleListener {
 
     int getCheckCardType();
 
+    boolean requireManualPin();
+
     void onFindCard(final AidlConstantsV2.CardType cardType);
 
     void onShowPinPad(PinPadListenerV2.Stub pinPadListener, PinPadConfigV2 pinPadConfig);

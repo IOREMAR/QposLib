@@ -179,9 +179,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void getPin(String maskedPAN) {
-        mPosService.getPin(1, 10, 8, REQUIERE_PIN, maskedPAN, getDateforTRX(), 15);
-    }
+    public void getPin(final Hashtable<String, String> dataCard){}
 
     @Override
     public void getSessionKeys(final String clavePublicaFile, final Context context) {

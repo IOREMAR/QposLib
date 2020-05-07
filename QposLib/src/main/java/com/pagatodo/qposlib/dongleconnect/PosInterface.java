@@ -22,7 +22,7 @@ public interface PosInterface {
 
     void setFallBack(boolean isFallback);
 
-    void getPin(final String maskedPAN);
+    void getPin(final Hashtable<String, String> dataCard);
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
 

@@ -47,7 +47,6 @@ public final class EmvUtil {
             int result = mSecurityOptV2.savePlaintextKey(AidlConstantsV2.Security.KEY_TYPE_TDK,
                     PosInstance.getInstance().getSunMIsessionKeys().get("plainDataKey"), PosInstance.getInstance().getSunMIsessionKeys().get("plainDataKcvKey"),
                     AidlConstantsV2.Security.KEY_ALG_TYPE_3DES, 10);
-//            AppLogger.LOGGER.fine(TAG, "save KEK result:" + result);
             if (result != 0) {
 //                AppLogger.LOGGER.fine(TAG, "save KEK fail");
                 return;
