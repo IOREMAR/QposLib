@@ -95,7 +95,7 @@ public class SunmiPosManager extends AbstractDongle {
         this.fallbackActivado = isFallback;
     }
 
-    public boolean isSunmiDevice() {
+    public static boolean isSunmiDevice() {
         Intent intent = new Intent("sunmi.intent.action.PAY_HARDWARE");
         intent.setPackage("com.sunmi.pay.hardware_v3");
         PackageManager pkgManager = PosInstance.getInstance().getAppContext().getPackageManager();
