@@ -32,7 +32,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,9 +46,6 @@ import Decoder.BASE64Decoder;
 
 public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle implements QPOSService.QPOSServiceListener {
 
-    /*Constantes
-     */
-    private static final String POS_ID = "posId";
     private final String TAG = QPosManager.class.getSimpleName();
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
@@ -60,9 +56,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public static final String CVM_LIMIT = "CVM_LIMIT";
     public static final String REQUIERE_PIN = "INGRESE PIN";
     private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07"};
-
-    /*Variables
-     */
 
     private QPOSService mPosService;
     private DspreadDevicePOS mDevice;
@@ -108,13 +101,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         this.setQposDspread(this);
     }
 
-    public QPosManager(final T dongleDevice, final DongleConnect listener) {
-        super(listener);
-        mQStatePOS.updateState(POSConnectionState.STATE_POS.NONE);
-        this.mDevicePos = dongleDevice;
-        this.setQposDspread(this);
-    }
-
     @Override
     public Hashtable<String, String> getQposIdHash() {
         logFlow("getQposIdHash() called");
@@ -131,7 +117,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         if (!isQPOSConnected()) {
             this.mDevice = mDevicePos;
-
             mPosService = QPOSService.getInstance(mDevice.getCommunicationMode());
         }
 
@@ -140,9 +125,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
 
         mPosService.setConext(PosInstance.getInstance().getAppContext());
-
         mPosService.initListener(this);
-
         mPosService.setShutDownTime(1800);
 
         switch (mDevice.getCommunicationMode()) {
@@ -205,10 +188,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void getSessionKeys(final String clavePublicaFile, final Context context) {
         logFlow("getSessionKeys() called with: clavePublicaFile = [" + clavePublicaFile + "], context = [" + context + "]");
+
         try {
             mPosService.updateRSA(getPublicKey(clavePublicaFile, context), clavePublicaFile);
         } catch (Exception exe) {
-
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Llave No Generada", false));
         }
     }
@@ -225,20 +208,14 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
             if (transactionAmountData.getTipoOperacion().equals("D")) {
                 mPosService.setQuickEmv(true);
+            } else if (transactionAmountData.getAmountIcon().equals("")) {
+                mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
             } else {
-                if (transactionAmountData.getAmountIcon().equals("")) {
-                    mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
-                } else {
-                    mPosService.setQuickEmv(true);
-                }
+                mPosService.setQuickEmv(true);
             }
 
             mPosService.setFormatId("0025");
-
             this.transactionAmountData = transactionAmountData;
-
-            final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
-            logFlow("doTransaccion: listCap = " + lisCap);
 
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         } else {
@@ -260,19 +237,15 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
             if (transactionAmountData.getTipoOperacion().equals("D")) {
                 mPosService.setQuickEmv(true);
+            } else if (transactionAmountData.getAmountIcon().equals("")) {
+                mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
             } else {
-                if (transactionAmountData.getAmountIcon().equals("")) {
-                    mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
-                } else {
-                    mPosService.setQuickEmv(true);
-                }
+                mPosService.setQuickEmv(true);
             }
+
 
             mPosService.setFormatId("0025");
             this.transactionAmountData = transactionAmountData;
-
-            final String lisCap = "Capacidades : ".concat(Arrays.toString(mListCapabilities.toArray()));
-            logFlow("doTransaccion: listCap = " + lisCap);
 
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         }
@@ -283,8 +256,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         final InputStream inputStream = contextApp.getAssets().open(filename);
         final BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-        String line = null;
         final StringBuilder sb = new StringBuilder();
+        String line;
 
         while ((line = br.readLine()) != null) {
             if (line.contains("BEGIN")) {
@@ -461,7 +434,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public void setListCapabillities(final Map<String, String> capabillities) {
-
         if (mListCapabilities == null) {
             mListCapabilities = new ArrayList<>();
         }
@@ -476,6 +448,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mListCapabilities.add(EmvAppTag.terminal_contactless_offline_floor_limit + qposParameters.getCtlsTransactionFloorLimitValue());
         mListCapabilities.add(EmvAppTag.terminal_contactless_transaction_limit + qposParameters.getCtlsTransactionLimitValue());
         mListCapabilities.add(EmvAppTag.Contactless_CVM_Required_limit + qposParameters.getCtlsTransactionCvmLimitValue());
+
+        logFlow("setListCapabillities() called with: mListCapabilities = [" + mListCapabilities + "]");
     }
 
     public void getPosServicePin(String maskedPAN, String dateforTRX) {
@@ -513,8 +487,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onQposInfoResult(final Hashtable<String, String> posInfoData) {
         logFlow("onQposInfoResult() called with: posInfoData = [" + posInfoData + "]");
-        mQPosDeviceInfo = new QPOSDeviceInfo();
 
+        mQPosDeviceInfo = new QPOSDeviceInfo();
         mQPosDeviceInfo.setUpdateWorkKeyFlag(posInfoData.get("updateWorkKeyFlag"));
         mQPosDeviceInfo.setIsSupportedTrack2(posInfoData.get("isSupportedTrack2"));
         mQPosDeviceInfo.setIsKeyboard(posInfoData.get("isKeyboard"));
@@ -534,8 +508,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onQposGenerateSessionKeysResult(final Hashtable<String, String> rsaData) {
         logFlow("onQposGenerateSessionKeysResult() called with: rsaData = [" + rsaData + "]");
-        if (rsaData != null && !rsaData.isEmpty()) {
 
+        if (rsaData != null && !rsaData.isEmpty()) {
             PosInstance.getInstance().setSessionKeys(rsaData);
 
 //            final QPOSSessionKeys qposSessionKeys = new QPOSSessionKeys(HexUtil.hex2byte(sessionKeys.get("enDataCardKey"), StandardCharsets.ISO_8859_1),
@@ -557,6 +531,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onQposDoSetRsaPublicKey(boolean isSetRSA) {
         logFlow("onQposDoSetRsaPublicKey() called with: isSetRSA = [" + isSetRSA + "]");
+
         if (!isSetRSA) {
             dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Clave RSA No Cargada", false));
         } else {
@@ -591,6 +566,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onDoTradeResult(final QPOSService.DoTradeResult doTradeResult, final Hashtable<String, String> decodeData) {
         logFlow("onDoTradeResult() called with: doTradeResult = [" + doTradeResult + "], decodeData = [" + decodeData + "]");
+
         mEmvTags.clear();
         mCurrentTradeResult = doTradeResult;
 
@@ -688,6 +664,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestSelectEmvApp(final ArrayList<String> listEMVApps) {
         logFlow("onRequestSelectEmvApp() called with: listEMVApps = [" + listEMVApps + "]");
+
         if (listEMVApps.size() == 1) {
             mPosService.selectEmvApp(0);
         } else if (listEMVApps.size() > 1) {
@@ -721,28 +698,27 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestOnlineProcess(String tlvString) {
         logFlow("onRequestOnlineProcess() called with: tlvString = [" + tlvString + "]");
+
         mEmvTags = reciverEMVTags();
         mDecodeData = mPosService.anlysEmvIccData(tlvString);
         mDecodeData.put(ICCDecodeData.TLV.getLabel(), tlvString);
-        //TODO Tiempo De Preguntar Los TAGS Al Dongle
-//        CamposEMVData.getInstance().reciverEMVTags();
-        final String iccTag = "9F33: ".concat(mPosService.getICCTag(0, 1, "9F33").toString());
-        logFlow("onRequestOnlineProcess: iccTag = " + iccTag);
         dongleListener.onResultData(mDecodeData, DongleListener.DoTradeResult.ICC);
     }
 
     @Override
     public void onRequestTime() {
-        logFlow("onRequestTime() called");
-        Context context = PosInstance.getInstance().getAppContext();
-        mPosService.sendTime(new SimpleDateFormat("yyyyMMddHHmmss", context.getResources().getConfiguration().locale).format(Calendar.getInstance().getTime()));
+        Locale locale = PosInstance.getInstance().getAppContext().getResources().getConfiguration().locale;
+        String formattedTime = new SimpleDateFormat("yyyyMMddHHmmss", locale)
+                .format(Calendar.getInstance().getTime());
+        logFlow("onRequestTime: " + formattedTime);
+        mPosService.sendTime(formattedTime);
     }
 
     @Override
     public void onRequestTransactionResult(final QPOSService.TransactionResult transactionResult) {
         logFlow("onRequestTransactionResult() called with: transactionResult = [" + transactionResult + "]");
-        switch (transactionResult) {
 
+        switch (transactionResult) {
             case CANCEL:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
                 break;
@@ -1215,31 +1191,33 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (transactionAmountData.getDecimales() == 0 && !"".equals(monto)) {
             amount = amount.concat("00");
         }
+
+        logFlow("setDecimalesAmount() returned: " + amount);
         return amount;
     }
 
     public String getDateforTRX() {
         final DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
-        final Date date = new Date();
-        return dateFormat.format(date);
+        final String formattedDate = dateFormat.format(new Date());
+        logFlow("getDateforTRX() returned: " + formattedDate);
+        return formattedDate;
     }
 
     public Map<String, String> reciverEMVTags() {
-
         final StringBuilder sBuilder = new StringBuilder();
-        StringBuilder tlvresponcebuilder;
 
         for (final String tag : TAGSEMV) {
             sBuilder.append(tag);
         }
 
-        final Integer emvLength = Integer.valueOf(TAGSEMV.length);
+        final int emvLength = TAGSEMV.length;
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
         if (tags.containsKey("tlv")) {
             String iccTlv = tags.get("tlv");
             tags.putAll(BBDeviceController.decodeTlv(iccTlv));
         }
 
+        logFlow("reciverEMVTags() returned: " + tags);
         return tags;
     }
 
@@ -1247,9 +1225,5 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (isLogEnabled) {
             Log.d(TAG, whatToLog);
         }
-    }
-
-    public void setLogEnabled(boolean logEnabled) {
-        isLogEnabled = logEnabled;
     }
 }
