@@ -1212,12 +1212,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         final int emvLength = TAGSEMV.length;
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
+        logFlow("reciverEMVTags: " + tags);
+
         if (tags.containsKey("tlv")) {
             String iccTlv = tags.get("tlv");
             tags.putAll(BBDeviceController.decodeTlv(iccTlv));
         }
 
-        logFlow("reciverEMVTags() returned: " + tags);
         return tags;
     }
 

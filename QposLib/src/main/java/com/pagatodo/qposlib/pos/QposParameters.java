@@ -56,4 +56,14 @@ public final class QposParameters {
     public void setCtlsTransactionFloorLimitValue(String ctlsTransactionFloorLimitValue) {
         this.ctlsTransactionFloorLimitValue = ctlsTransactionFloorLimitValue;
     }
+
+
+    @Override
+    public String toString() {
+        return "{\"cardTradeMode\" : " + (cardTradeMode)
+                + ",\"ctlsTransactionLimitValue\" : " + (ctlsTransactionLimitValue == null ? null : "\"" + ctlsTransactionLimitValue + "\"")
+                + ",\"ctlsTransactionCvmLimitValue\" : " + (ctlsTransactionCvmLimitValue == null ? null : "\"" + ctlsTransactionCvmLimitValue + "\"")
+                + ",\"ctlsTransactionFloorLimitValue\" : " + (ctlsTransactionFloorLimitValue == null ? null : "\"" + ctlsTransactionFloorLimitValue + "\"")
+                + "}";
+    }
 }
