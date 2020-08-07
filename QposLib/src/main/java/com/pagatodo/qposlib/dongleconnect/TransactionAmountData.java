@@ -1,7 +1,8 @@
 package com.pagatodo.qposlib.dongleconnect;
 
-import android.support.annotation.NonNull;
 import android.util.ArrayMap;
+
+import androidx.annotation.NonNull;
 
 import com.dspread.xpos.QPOSService;
 

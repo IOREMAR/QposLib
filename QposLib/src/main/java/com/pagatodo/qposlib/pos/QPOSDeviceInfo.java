@@ -1,6 +1,6 @@
 package com.pagatodo.qposlib.pos;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class QPOSDeviceInfo {
 
