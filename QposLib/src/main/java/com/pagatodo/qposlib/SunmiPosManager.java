@@ -229,14 +229,6 @@ public class SunmiPosManager extends AbstractDongle {
     }
 
     @Override
-    public void doTransaccion(TransactionAmountData transactionAmountData) {
-        //TODO validar operacion EMV, leer banda, leer chip
-        initData(transactionAmountData.getCapacidades());
-        this.transactionAmountData = transactionAmountData;
-        startProcessEmv(transactionAmountData.getAmount());
-    }
-
-    @Override
     public void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters) {
         //TODO validar operacion EMV, leer banda, leer chip
         initData(transactionAmountData.getCapacidades());

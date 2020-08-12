@@ -21,6 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.cunoraz.gifview.library.GifView;
+import com.pagatodo.qposlib.BuildConfig;
 import com.pagatodo.qposlib.PosInstance;
 import com.pagatodo.qposlib.R;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
@@ -172,7 +173,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
                 //Pintado Mensaje
                 txtStatus.setText(R.string.Conectando_Dispositivo);
                 ///
-                final AbstractDongle qpos = new DSpreadDevicePosFactory().getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this);
+                final AbstractDongle qpos = new DSpreadDevicePosFactory().getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this, BuildConfig.DEBUG);
                 PosInstance.getInstance().setDongle(qpos);
                 imgLector.setGifResource(COLOR_TEMA.equals("AZUL") ? R.raw.totem_connecting_blue : R.raw.totem_connecting_red );
                 broadcastManager.realizarConexion(qpos);
@@ -207,7 +208,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
                     usbManager.requestPermission(device, permissionIntent);
                 } else if (device.getVendorId() == QPOS_VENDOR_ID) {
 
-                    final AbstractDongle qpos = dSpreadDevicePosFactory.getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this);
+                    final AbstractDongle qpos = dSpreadDevicePosFactory.getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this, BuildConfig.DEBUG);
                     broadcastManager.realizarConexion(qpos);
                     break;
                 }
@@ -273,6 +274,11 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
         setResult(RESULT_OK, data);
         finish();
 //        cambiaDeActividad(LoginPCIActivity.class);
+    }
+
+    @Override
+    public void onReturnEmvConfigResult(boolean wasSuccessful) {
+
     }
 
     public void restaurarEnLugarDeNada() {

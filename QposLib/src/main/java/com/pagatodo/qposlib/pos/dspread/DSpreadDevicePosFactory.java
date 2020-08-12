@@ -14,18 +14,6 @@ import java.util.Hashtable;
 
 public class DSpreadDevicePosFactory {
 
-    public AbstractDongle getDongleDevice(final Parcelable device, final PosInterface.Tipodongle tipodongle, final DongleConnect dongleConnect) {
-        if (tipodongle.equals(PosInterface.Tipodongle.DSPREAD)) {
-            if (device instanceof BluetoothDevice) {
-                return new QPosManager(new POSBluetoothDevice((BluetoothDevice) device), dongleConnect, false);
-            } else if (device instanceof UsbDevice) {
-                return new QPosManager(new POSUsbOTGDevice((UsbDevice) device), dongleConnect, false);
-            }
-        }
-
-        return null;
-    }
-
     public AbstractDongle getDongleDevice(final Parcelable device, final PosInterface.Tipodongle tipodongle, final DongleConnect dongleConnect, boolean enableLog) {
         if (tipodongle.equals(PosInterface.Tipodongle.DSPREAD)) {
             if (device instanceof BluetoothDevice) {

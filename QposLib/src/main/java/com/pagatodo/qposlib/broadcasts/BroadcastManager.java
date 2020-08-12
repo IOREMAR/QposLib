@@ -14,6 +14,7 @@ import android.hardware.usb.UsbManager;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
+import com.pagatodo.qposlib.BuildConfig;
 import com.pagatodo.qposlib.PosInstance;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
@@ -151,7 +152,7 @@ public class BroadcastManager extends BroadcastReceiver {
 
             if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                 if (usbDevice != null) {
-                    qpos = new DSpreadDevicePosFactory().getDongleDevice(usbDevice, PosInterface.Tipodongle.DSPREAD, dongleListener);
+                    qpos = new DSpreadDevicePosFactory().getDongleDevice(usbDevice, PosInterface.Tipodongle.DSPREAD, dongleListener, BuildConfig.DEBUG);
                     PosInstance.getInstance().setDongle(qpos);
                     realizarConexion(PosInstance.getInstance().getDongle());
                 } else {

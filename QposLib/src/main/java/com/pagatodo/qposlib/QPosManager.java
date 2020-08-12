@@ -61,7 +61,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private DspreadDevicePOS mDevice;
     private TransactionAmountData transactionAmountData;
     private QPOSDeviceInfo mQPosDeviceInfo;
-    private QposServiceListener mQposServiceCallback;
     private QPOSService.DoTradeResult mCurrentTradeResult;
     private Hashtable<String, String> mDecodeData;
     private ArrayList<String> mListCapabilities;
@@ -70,24 +69,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private QposParameters qposParameters;
     private boolean isUpdatingFirmware;
     private boolean isLogEnabled;
-
-    public interface QposServiceListener {
-        void onQposIdResult(Hashtable<String, String> hashtable);
-
-        void onDoTradeResult(Hashtable<String, String> hashtable);
-
-        void onValidatorProfile();
-
-        void setPosAmount();
-
-        Context getContext();
-
-        TransactionAmountData getTransactionAmountData();
-
-        void onReturnCustomConfigResult();
-
-        void onRequestOnlineProcess();
-    }
 
     public void setQposDongleListener(DongleListener listener) {
         dongleListener = listener;
@@ -103,12 +84,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public Hashtable<String, String> getQposIdHash() {
-        logFlow("getQposIdHash() called");
+        logFlow("getQposIdHash() returned: " + mQposIdHash);
         return mQposIdHash;
-    }
-
-    public void setQposServiceListener(QposServiceListener qposServiceCallback) {
-        mQposServiceCallback = qposServiceCallback;
     }
 
     @Override
@@ -197,33 +174,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void doTransaccion(TransactionAmountData transactionAmountData) {
-        logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "]");
-
-        if (mPosService.isQposPresent()) {
-
-            mListCapabilities = new ArrayList<>();
-
-            setListCapabillities(transactionAmountData.getCapacidades());
-
-            if (transactionAmountData.getTipoOperacion().equals("D")) {
-                mPosService.setQuickEmv(true);
-            } else if (transactionAmountData.getAmountIcon().equals("")) {
-                mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
-            } else {
-                mPosService.setQuickEmv(true);
-            }
-
-            mPosService.setFormatId("0025");
-            this.transactionAmountData = transactionAmountData;
-
-            mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
-        } else {
-            onRequestQposDisconnected();
-        }
-    }
-
-    @Override
     public void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters) {
         logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "], qposParameters = [" + qposParameters + "]");
 
@@ -242,7 +192,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             } else {
                 mPosService.setQuickEmv(true);
             }
-
 
             mPosService.setFormatId("0025");
             this.transactionAmountData = transactionAmountData;
@@ -305,13 +254,12 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return transactionAmountData.getTipoOperacion().equals("D");
     }
 
-//    public void setEmvConfig(byte[] emvCapkCfgBytes, byte[] emvCapAppBytes){
-//        final String emvCapkCfg = HexUtil.hexStringFromBytes(emvCapkCfgBytes);
-//        final String emvCapApp = HexUtil.hexStringFromBytes(emvCapAppBytes);
-//        mPosService.updateEmvConfig(emvCapApp,emvCapkCfg);
-//    }
+    public void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex) {
+        logFlow("setReaderEmvConfig() called with: emvCfgAppHex = [" + emvCfgAppHex + "], emvCfgCapkHex = [" + emvCfgCapkHex + "]");
+        mPosService.updateEmvConfig(emvCfgAppHex, emvCfgCapkHex);
+    }
 
-    public void updateEmvApp() {
+    public void updateReaderCapabilities() {
         if (mListCapabilities != null) {
             mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
         }
@@ -457,6 +405,22 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     //Montón de métodos heredados de la librería del QPOS
+
+    @Override
+    public void onRequestCvmApp(Hashtable<String, String> values) {
+        logFlow("onRequestCvmApp() called with: values = [" + values + "]");
+    }
+
+    @Override
+    public void onQposTestCommandResult(boolean isSuccess) {
+        logFlow("onQposTestCommandResult() called with: isSuccess = [" + isSuccess + "]");
+    }
+
+    @Override
+    public void onQposTestSelfCommandResult(final boolean isSuccess, final String datas) {
+        logFlow("onQposTestSelfCommandResult() called with: isSuccess = [" + isSuccess + "], datas = [" + datas + "]");
+    }
+
     @Override
     public void onRequestWaitingUser() {
         logFlow("onRequestWaitingUser() called");
@@ -799,7 +763,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     // NONE
                     break;
                 case DEVICE_RESET:
-                    if (transactionAmountData == null && mDecodeData != null) {
+                    if (transactionAmountData == null) {
                         dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
                     }
                     break;
@@ -873,8 +837,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onReturnCustomConfigResult(final boolean isSuccess, final String result) {
         logFlow("onReturnCustomConfigResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
-        mQposServiceCallback.onReturnCustomConfigResult();
-        mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
+        dongleConnect.onReturnEmvConfigResult(isSuccess);
+//        mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
     }
 
     @Override
