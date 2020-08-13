@@ -396,6 +396,22 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mListCapabilities.add(EmvAppTag.terminal_contactless_offline_floor_limit + qposParameters.getCtlsTransactionFloorLimitValue());
         mListCapabilities.add(EmvAppTag.terminal_contactless_transaction_limit + qposParameters.getCtlsTransactionLimitValue());
         mListCapabilities.add(EmvAppTag.Contactless_CVM_Required_limit + qposParameters.getCtlsTransactionCvmLimitValue());
+        mListCapabilities.add(EmvAppTag.Terminal_Default_Transaction_Qualifiers + "B6E0C000"); // Calificador
+
+        String tlvHeader = "7F10";
+        String mcCtlsAboveCvmLimitCapabilities = "DF811801E8";
+        String mcCtlsUnderCvmLimitCapabilities = "DF81190108";
+        String mcCtlsNoOnDeviceMaxLimit = "DF812406" + qposParameters.getCtlsTransactionLimitValue();
+        String mcCtlsOnDeviceMaxLimit = "DF812506" + qposParameters.getCtlsTransactionLimitValue();
+        String mcCtlsFloorLimit = "DF812306000000000000";
+        String mcCtlsCvmLimit = "DF812606" + qposParameters.getCtlsTransactionCvmLimitValue(); //BuildConfig.CVM_REQUIRED_LIMIT;
+        mListCapabilities.add(tlvHeader
+                + mcCtlsAboveCvmLimitCapabilities
+                + mcCtlsUnderCvmLimitCapabilities
+                + mcCtlsNoOnDeviceMaxLimit
+                + mcCtlsOnDeviceMaxLimit
+                + mcCtlsFloorLimit
+                + mcCtlsCvmLimit);
 
         logFlow("setListCapabillities() called with: mListCapabilities = [" + mListCapabilities + "]");
     }
