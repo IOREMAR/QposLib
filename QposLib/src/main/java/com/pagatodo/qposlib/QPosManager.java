@@ -200,6 +200,32 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
     }
 
+    @Override
+    public void doTransaccionNextOperation(TransactionAmountData transactionAmountData, QposParameters qposParameters) {
+        logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "]");
+
+        if (mPosService.isQposPresent()) {
+
+            mListCapabilities = new ArrayList<>();
+
+            setListCapabillities(transactionAmountData.getCapacidades());
+            this.transactionAmountData = transactionAmountData;
+            if (this.transactionAmountData.getTipoOperacion().equals("D")) {
+                mPosService.setQuickEmv(true);
+            } else if (transactionAmountData.getAmountIcon().equals("")) {
+                mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
+            } else {
+                mPosService.setQuickEmv(true);
+            }
+
+            mPosService.setFormatId("0025");
+
+            mPosService.doEmvApp(QPOSService.EmvOption.START);
+        } else {
+            onRequestQposDisconnected();
+        }
+    }
+
     public PublicKey getPublicKey(final String filename, final Context contextApp) throws Exception {//NOSONAR
         logFlow("getPublicKey() called with: filename = [" + filename + "], contextApp = [" + contextApp + "]");
 
