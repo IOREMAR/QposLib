@@ -11,6 +11,54 @@ public final class QposParameters {
     private String ctlsTransactionLimitValue;
     private String ctlsTransactionCvmLimitValue;
     private String ctlsTransactionFloorLimitValue;
+    private String ctlsTransactionAboveCvmLimitCapabilities;
+    private String ctlsTransactionUnderCvmLimitCapabilities;
+    private String defaultTransactionTerminalQualifiers;
+    private String ics;
+
+    public String getIcs() {
+        return ics;
+    }
+
+    /**
+     * @param ics TagValue length: 16
+     */
+    public void setIcs(String ics) {
+        this.ics = ics;
+    }
+
+    public String getCtlsTransactionAboveCvmLimitCapabilities() {
+        return ctlsTransactionAboveCvmLimitCapabilities;
+    }
+
+    /**
+     * @param ctlsTransactionAboveCvmLimitCapabilities TagValue length: 1
+     */
+    public void setCtlsTransactionAboveCvmLimitCapabilities(String ctlsTransactionAboveCvmLimitCapabilities) {
+        this.ctlsTransactionAboveCvmLimitCapabilities = ctlsTransactionAboveCvmLimitCapabilities;
+    }
+
+    public String getCtlsTransactionUnderCvmLimitCapabilities() {
+        return ctlsTransactionUnderCvmLimitCapabilities;
+    }
+
+    /**
+     * @param ctlsTransactionUnderCvmLimitCapabilities TagValue length: 1
+     */
+    public void setCtlsTransactionUnderCvmLimitCapabilities(String ctlsTransactionUnderCvmLimitCapabilities) {
+        this.ctlsTransactionUnderCvmLimitCapabilities = ctlsTransactionUnderCvmLimitCapabilities;
+    }
+
+    public String getTransactionTerminalDefaultQualifiers() {
+        return defaultTransactionTerminalQualifiers;
+    }
+
+    /**
+     * @param transactionTerminalDefaultQualifiers TagValue length: 4
+     */
+    public void setDefaultTransactionTerminalQualifiers(String transactionTerminalDefaultQualifiers) {
+        this.defaultTransactionTerminalQualifiers = transactionTerminalDefaultQualifiers;
+    }
 
     public void setTradeMode(int tradeMode) {
         if (tradeMode == (QposParameters.MODE_ICC | QposParameters.MODE_NFC)) {
@@ -37,6 +85,9 @@ public final class QposParameters {
         return ctlsTransactionLimitValue;
     }
 
+    /**
+     * @param ctlsTransactionLimitValue TagValue length: 6
+     */
     public void setCtlsTransactionLimitValue(String ctlsTransactionLimitValue) {
         this.ctlsTransactionLimitValue = ctlsTransactionLimitValue;
     }
@@ -45,6 +96,9 @@ public final class QposParameters {
         return ctlsTransactionCvmLimitValue;
     }
 
+    /**
+     * @param ctlsTransactionCvmLimitValue TagValue length: 6
+     */
     public void setCtlsTransactionCvmLimitValue(String ctlsTransactionCvmLimitValue) {
         this.ctlsTransactionCvmLimitValue = ctlsTransactionCvmLimitValue;
     }
@@ -53,10 +107,12 @@ public final class QposParameters {
         return ctlsTransactionFloorLimitValue;
     }
 
+    /**
+     * @param ctlsTransactionFloorLimitValue TagValue length: 6
+     */
     public void setCtlsTransactionFloorLimitValue(String ctlsTransactionFloorLimitValue) {
         this.ctlsTransactionFloorLimitValue = ctlsTransactionFloorLimitValue;
     }
-
 
     @Override
     public String toString() {
@@ -64,6 +120,9 @@ public final class QposParameters {
                 + ",\"ctlsTransactionLimitValue\" : " + (ctlsTransactionLimitValue == null ? null : "\"" + ctlsTransactionLimitValue + "\"")
                 + ",\"ctlsTransactionCvmLimitValue\" : " + (ctlsTransactionCvmLimitValue == null ? null : "\"" + ctlsTransactionCvmLimitValue + "\"")
                 + ",\"ctlsTransactionFloorLimitValue\" : " + (ctlsTransactionFloorLimitValue == null ? null : "\"" + ctlsTransactionFloorLimitValue + "\"")
-                + "}";
+                + ",\"ctlsTransactionAboveCvmLimitCapabilities\" : " + (ctlsTransactionAboveCvmLimitCapabilities == null ? null : "\"" + ctlsTransactionAboveCvmLimitCapabilities + "\"")
+                + ",\"ctlsTransactionUnderCvmLimitCapabilities\" : " + (ctlsTransactionUnderCvmLimitCapabilities == null ? null : "\"" + ctlsTransactionUnderCvmLimitCapabilities + "\"")
+                + ",\"defaultTransactionTerminalQualifiers\" : " + (defaultTransactionTerminalQualifiers == null ? null : "\"" + defaultTransactionTerminalQualifiers + "\"")
+                + ",\"ics\" : " + (ics == null ? null : "\"" + ics + "\"") + "}";
     }
 }

@@ -386,24 +386,24 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             mListCapabilities = new ArrayList<>();
         }
 
-        mListCapabilities.add(EmvAppTag.ICS + "F4F070FAAFFE8000");
+        mListCapabilities.add(EmvAppTag.ICS + qposParameters.getIcs());
         mListCapabilities.add(EmvAppTag.Terminal_Cterminal_contactless_transaction_limitapabilities + capabillities.get(TERMINAL_CAPS));
         mListCapabilities.add(EmvAppTag.Additional_Terminal_Capabilities + capabillities.get(ADITIONAL_CAPS));
         mListCapabilities.add(EmvAppTag.Transaction_Currency_Code + capabillities.get(CURRENCY_CODE));
         mListCapabilities.add(EmvAppTag.Terminal_Country_Code + capabillities.get(COUNTRY_CODE));
         mListCapabilities.add(EmvAppTag.terminal_execute_cvm_limit + capabillities.get(CVM_LIMIT));
 
-        mListCapabilities.add(EmvAppTag.terminal_contactless_offline_floor_limit + qposParameters.getCtlsTransactionFloorLimitValue());
+        mListCapabilities.add(EmvAppTag.Terminal_Default_Transaction_Qualifiers + qposParameters.getTransactionTerminalDefaultQualifiers()); // Calificador
+        mListCapabilities.add(EmvAppTag.terminal_contactless_offline_floor_limit + qposParameters.getCtlsTransactionFloorLimitValue().substring(4));
         mListCapabilities.add(EmvAppTag.terminal_contactless_transaction_limit + qposParameters.getCtlsTransactionLimitValue());
         mListCapabilities.add(EmvAppTag.Contactless_CVM_Required_limit + qposParameters.getCtlsTransactionCvmLimitValue());
-        mListCapabilities.add(EmvAppTag.Terminal_Default_Transaction_Qualifiers + "B6E0C000"); // Calificador
 
         String tlvHeader = "7F10";
-        String mcCtlsAboveCvmLimitCapabilities = "DF811801E8";
-        String mcCtlsUnderCvmLimitCapabilities = "DF81190108";
+        String mcCtlsAboveCvmLimitCapabilities = "DF811801" + qposParameters.getCtlsTransactionAboveCvmLimitCapabilities();
+        String mcCtlsUnderCvmLimitCapabilities = "DF811901" + qposParameters.getCtlsTransactionUnderCvmLimitCapabilities();
         String mcCtlsNoOnDeviceMaxLimit = "DF812406" + qposParameters.getCtlsTransactionLimitValue();
         String mcCtlsOnDeviceMaxLimit = "DF812506" + qposParameters.getCtlsTransactionLimitValue();
-        String mcCtlsFloorLimit = "DF812306000000000000";
+        String mcCtlsFloorLimit = "DF812306" + qposParameters.getCtlsTransactionFloorLimitValue();
         String mcCtlsCvmLimit = "DF812606" + qposParameters.getCtlsTransactionCvmLimitValue(); //BuildConfig.CVM_REQUIRED_LIMIT;
         mListCapabilities.add(tlvHeader
                 + mcCtlsAboveCvmLimitCapabilities
