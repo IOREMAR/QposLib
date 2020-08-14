@@ -200,7 +200,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
     }
 
-    @Override
     public void doTransaccionNextOperation(TransactionAmountData transactionAmountData, QposParameters qposParameters) {
         logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "]");
 
