@@ -25,6 +25,8 @@ public interface PosInterface {
 
     void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
+    void doTransaccionNextOperation(TransactionAmountData transactionAmountData, QposParameters qposParameters);
+
     void cancelOperacion();
 
     void operacionFinalizada(final String ARPC);
