@@ -17,6 +17,8 @@ public interface DongleListener {
 
     boolean checkDoTrade();
 
+    void onPinResult(final Hashtable<String, String> result);
+
     void onBatchReadMifareCardResult(String s, Hashtable<String, List<String>> hashtable);//NOSONAR
 
     void onBatchWriteMifareCardResult(String s, Hashtable<String, List<String>> hashtable);//NOSONAR

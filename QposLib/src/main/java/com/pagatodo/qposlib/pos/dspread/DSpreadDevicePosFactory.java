@@ -5,7 +5,6 @@ import android.hardware.usb.UsbDevice;
 import android.os.Parcelable;
 
 import com.pagatodo.qposlib.QPosManager;
-import com.pagatodo.qposlib.SunmiPosManager;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.PosInterface;
@@ -28,7 +27,7 @@ public class DSpreadDevicePosFactory {
 
     public AbstractDongle getDongleDevice(final PosInterface.Tipodongle tipodongle, final DongleConnect dongleConnect, Hashtable<String, String> hashtable) {
         if (tipodongle.equals(PosInterface.Tipodongle.SUNMI)) {
-            return new SunmiPosManager(dongleConnect, hashtable);
+            return null;
         }
         return null;
     }

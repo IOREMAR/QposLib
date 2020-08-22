@@ -573,6 +573,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onDoTradeResult() called with: doTradeResult = [" + doTradeResult + "], decodeData = [" + decodeData + "]");
 
         mEmvTags.clear();
+        mDecodeData = decodeData;
         mCurrentTradeResult = doTradeResult;
 
         if (doTradeResult == QPOSService.DoTradeResult.NFC_ONLINE
@@ -587,7 +588,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         } else {
             onFailTradeResult(doTradeResult);
         }
-//        mQposServiceCallback.onDoTradeResult(hashtable);
     }
 
     @Override
@@ -833,6 +833,16 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onReturnGetPinResult(final Hashtable<String, String> result) {
         logFlow("onReturnGetPinResult() called with: result = [" + result + "]");
+
+        if (result != null) {
+            if (mDecodeData == null) {
+                mDecodeData = result;
+            } else {
+                mDecodeData.putAll(result);
+            }
+        }
+
+        dongleListener.onPinResult(mDecodeData);
     }
 
     @Override
