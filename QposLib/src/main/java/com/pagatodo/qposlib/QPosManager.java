@@ -55,7 +55,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public static final String COUNTRY_CODE = "COUNTRY_CODE";
     public static final String CVM_LIMIT = "CVM_LIMIT";
     public static final String REQUIERE_PIN = "INGRESE PIN";
-    private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07"};
+    private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07", "5F36"};
 
     private QPOSService mPosService;
     private DspreadDevicePOS mDevice;
@@ -280,7 +280,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex) {
-        logFlow("setReaderEmvConfig() called with: emvCfgAppHex = [" + emvCfgAppHex + "], emvCfgCapkHex = [" + emvCfgCapkHex + "]");
+        logFlow("setReaderEmvConfig() called with: emvCfgAppHex = [" + emvCfgAppHex + "]");
+        logFlow("setReaderEmvConfig() called with: emvCfgCapkHex = [" + emvCfgCapkHex + "]");
         mPosService.updateEmvConfig(emvCfgAppHex, emvCfgCapkHex);
     }
 
@@ -447,15 +448,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     //Montón de métodos heredados de la librería del QPOS
 
-    @Override
-    public void onRequestCvmApp(Hashtable<String, String> values) {
-        logFlow("onRequestCvmApp() called with: values = [" + values + "]");
-    }
-
-    @Override
-    public void onQposTestCommandResult(boolean isSuccess) {
-        logFlow("onQposTestCommandResult() called with: isSuccess = [" + isSuccess + "]");
-    }
+//    @Override
+//    public void onRequestCvmApp(Hashtable<String, String> values) {
+//        logFlow("onRequestCvmApp() called with: values = [" + values + "]");
+//    }
 
     @Override
     public void onQposTestSelfCommandResult(final boolean isSuccess, final String datas) {
@@ -463,8 +459,49 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onQposTestCommandResult(boolean isSuccess, String dataResult) {
+        logFlow("onQposTestCommandResult() called with: isSuccess = [" + isSuccess + "], dataResult = [" + dataResult + "]");
+    }
+
+    @Override
+    public void onQposRequestPinResult(List<String> dataResult, int offlineTime) {
+        logFlow("onQposRequestPinResult() called with: dataResult = [" + dataResult + "], offlineTime = [" + offlineTime + "]");
+    }
+
+    @Override
+    public void onReturnD20SleepTimeResult(boolean isSuccess) {
+        logFlow("onReturnD20SleepTimeResult() called with: isSuccess = [" + isSuccess + "]");
+    }
+
+    @Override
+    public void onQposRequestPinStartResult(List<String> dataResult) {
+        logFlow("onQposRequestPinStartResult() called with: dataResult = [" + dataResult + "]");
+    }
+
+    @Override
+    public void onQposPinMapSyncResult(boolean isSuccess, boolean isNeedPin) {
+        logFlow("onQposPinMapSyncResult() called with: isSuccess = [" + isSuccess + "], isNeedPin = [" + isNeedPin + "]");
+
+    }
+
+    @Override
     public void onRequestWaitingUser() {
         logFlow("onRequestWaitingUser() called");
+    }
+
+    @Override
+    public void onReturnRsaResult(String data) {
+        logFlow("onReturnRsaResult() called with: data = [" + data + "]");
+    }
+
+    @Override
+    public void onQposInitModeResult(boolean isSuccess) {
+        logFlow("onQposInitModeResult() called with: isSuccess = [" + isSuccess + "]");
+    }
+
+    @Override
+    public void onD20StatusResult(String data) {
+        logFlow("onD20StatusResult() called with: data = [" + data + "]");
     }
 
     @Override
@@ -508,6 +545,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mQPosDeviceInfo.setIsUsbConnected(posInfoData.get("isUsbConnected"));
 
         dongleConnect.onDeviceConnected();
+    }
+
+    @Override
+    public void onQposCertificateInfoResult(List<String> deviceInfoData) {
+        logFlow("onQposCertificateInfoResult() called with: deviceInfoData = [" + deviceInfoData + "]");
     }
 
     @Override
@@ -831,6 +873,16 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onReturnGetPinInputResult(int result) {
+        logFlow("onReturnGetPinInputResult() called with: result = [" + result + "]");
+    }
+
+    @Override
+    public void onReturnGetKeyBoardInputResult(String result) {
+        logFlow("onReturnGetKeyBoardInputResult() called with: result = [" + result + "]");
+    }
+
+    @Override
     public void onReturnGetPinResult(final Hashtable<String, String> result) {
         logFlow("onReturnGetPinResult() called with: result = [" + result + "]");
 
@@ -886,10 +938,20 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onRequestSendTR31KeyResult(boolean result) {
+        logFlow("onRequestSendTR31KeyResult() called with: result = [" + result + "]");
+    }
+
+    @Override
     public void onReturnCustomConfigResult(final boolean isSuccess, final String result) {
         logFlow("onReturnCustomConfigResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
         dongleConnect.onReturnEmvConfigResult(isSuccess);
 //        mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
+    }
+
+    @Override
+    public void onRetuenGetTR31Token(String datas) {
+        logFlow("onRetuenGetTR31Token() called with: datas = [" + datas + "]");
     }
 
     @Override
@@ -946,6 +1008,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onReturnGetEMVListResult(final String data) {
         logFlow("onReturnGetEMVListResult() called with: data = [" + data + "]");
+    }
+
+    @Override
+    public void onReturnGetCustomEMVListResult(Map<String, String> data) {
+        logFlow("onReturnGetCustomEMVListResult() called with: data = [" + data + "]");
     }
 
     @Override
@@ -1043,6 +1110,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onSetParamsResult(final boolean b, final Hashtable<String, Object> resultTable) {
         logFlow("onSetParamsResult() called with: b = [" + b + "], resultTable = [" + resultTable + "]");
+    }
+
+    @Override
+    public void onSetVendorIDResult(boolean b, Hashtable<String, Object> resultTable) {
+        logFlow("onSetVendorIDResult() called with: b = [" + b + "], resultTable = [" + resultTable + "]");
     }
 
     @Override
@@ -1200,6 +1272,17 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onQposIsCardExistInOnlineProcess() called with: haveCard = [" + haveCard + "]");
     }
 
+    @Override
+    public void onReturnSetConnectedShutDownTimeResult(boolean isSuccess) {
+        logFlow("onReturnSetConnectedShutDownTimeResult() called with: isSuccess = [" + isSuccess + "]");
+    }
+
+    @Override
+    public void onReturnGetConnectedShutDownTimeResult(String b) {
+        logFlow("onReturnGetConnectedShutDownTimeResult() called with: b = [" + b + "]");
+
+    }
+
     private String setDecimalesAmount(final String monto) {
         String amount = monto;
         //TODO Seleccionar el monto del pais - difiere del que existen el la BD ?
@@ -1225,8 +1308,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             sBuilder.append(tag);
         }
 
-        final int emvLength = TAGSEMV.length;
-        Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, emvLength, sBuilder.toString());
+        Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, TAGSEMV.length, sBuilder.toString());
         logFlow("reciverEMVTags: " + tags);
 
         if (tags.containsKey("tlv")) {
