@@ -8,7 +8,6 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import com.bbpos.bbdevice.BBDeviceController;
-import com.dspread.xpos.EmvAppTag;
 import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
@@ -40,7 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import Decoder.BASE64Decoder;
 
@@ -49,11 +47,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private final String TAG = QPosManager.class.getSimpleName();
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
-    public static final String TERMINAL_CAPS = "TERMINAL_CAPS";
-    public static final String ADITIONAL_CAPS = "ADITIONAL_CAPS";
-    public static final String CURRENCY_CODE = "CURRENCY_CODE";
-    public static final String COUNTRY_CODE = "COUNTRY_CODE";
-    public static final String CVM_LIMIT = "CVM_LIMIT";
     public static final String REQUIERE_PIN = "INGRESE PIN";
     private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07", "5F36"};
 
@@ -63,10 +56,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private QPOSDeviceInfo mQPosDeviceInfo;
     private QPOSService.DoTradeResult mCurrentTradeResult;
     private Hashtable<String, String> mDecodeData;
-    private ArrayList<String> mListCapabilities;
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
-    private QposParameters qposParameters;
     private boolean isUpdatingFirmware;
     private boolean isLogEnabled;
 
@@ -180,10 +171,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (!mPosService.isQposPresent()) {
             onRequestQposDisconnected();
         } else {
-            mListCapabilities = new ArrayList<>();
-            this.qposParameters = qposParameters;
-
-            setListCapabillities(transactionAmountData.getCapacidades());
+            this.transactionAmountData = transactionAmountData;
 
             if (transactionAmountData.getTipoOperacion().equals("D")) {
                 mPosService.setQuickEmv(true);
@@ -194,9 +182,14 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             }
 
             mPosService.setFormatId("0025");
-            this.transactionAmountData = transactionAmountData;
+            mPosService.setOnlineTime(1000);
+            mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
 
-            mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
+            if (dongleListener.checkDoTrade()) {
+                mPosService.doTrade(10, 30);
+            } else {
+                mPosService.doCheckCard(30, 10);
+            }
         }
     }
 
@@ -204,11 +197,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "]");
 
         if (mPosService.isQposPresent()) {
-
-            mListCapabilities = new ArrayList<>();
-
-            setListCapabillities(transactionAmountData.getCapacidades());
             this.transactionAmountData = transactionAmountData;
+
             if (this.transactionAmountData.getTipoOperacion().equals("D")) {
                 mPosService.setQuickEmv(true);
             } else if (transactionAmountData.getAmountIcon().equals("")) {
@@ -218,7 +208,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             }
 
             mPosService.setFormatId("0025");
-
             mPosService.doEmvApp(QPOSService.EmvOption.START);
         } else {
             onRequestQposDisconnected();
@@ -285,10 +274,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.updateEmvConfig(emvCfgAppHex, emvCfgCapkHex);
     }
 
-    public void updateReaderCapabilities() {
-        if (mListCapabilities != null) {
-            mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
-        }
+    @Override
+    public void setEmvAidUpdate(ArrayList<String> aidConfigList) {
+        logFlow("setEmvAppUpdate() called with: aidConfigList = [" + aidConfigList + "]");
+        mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, aidConfigList);
     }
 
     public int updateFirmware(byte[] dataToUpdate, String file) {
@@ -407,40 +396,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
     }
 
-    public void setListCapabillities(final Map<String, String> capabillities) {
-        if (mListCapabilities == null) {
-            mListCapabilities = new ArrayList<>();
-        }
-
-        mListCapabilities.add(EmvAppTag.ICS + qposParameters.getIcs());
-        mListCapabilities.add(EmvAppTag.Terminal_Cterminal_contactless_transaction_limitapabilities + capabillities.get(TERMINAL_CAPS));
-        mListCapabilities.add(EmvAppTag.Additional_Terminal_Capabilities + capabillities.get(ADITIONAL_CAPS));
-        mListCapabilities.add(EmvAppTag.Transaction_Currency_Code + capabillities.get(CURRENCY_CODE));
-        mListCapabilities.add(EmvAppTag.Terminal_Country_Code + capabillities.get(COUNTRY_CODE));
-        mListCapabilities.add(EmvAppTag.terminal_execute_cvm_limit + capabillities.get(CVM_LIMIT));
-
-        mListCapabilities.add(EmvAppTag.Terminal_Default_Transaction_Qualifiers + qposParameters.getTransactionTerminalDefaultQualifiers()); // Calificador
-        mListCapabilities.add(EmvAppTag.terminal_contactless_offline_floor_limit + qposParameters.getCtlsTransactionFloorLimitValue().substring(4));
-        mListCapabilities.add(EmvAppTag.terminal_contactless_transaction_limit + qposParameters.getCtlsTransactionLimitValue());
-        mListCapabilities.add(EmvAppTag.Contactless_CVM_Required_limit + qposParameters.getCtlsTransactionCvmLimitValue());
-
-        String tlvHeader = "7F10";
-        String mcCtlsAboveCvmLimitCapabilities = "DF811801" + qposParameters.getCtlsTransactionAboveCvmLimitCapabilities();
-        String mcCtlsUnderCvmLimitCapabilities = "DF811901" + qposParameters.getCtlsTransactionUnderCvmLimitCapabilities();
-        String mcCtlsNoOnDeviceMaxLimit = "DF812406" + qposParameters.getCtlsTransactionLimitValue();
-        String mcCtlsOnDeviceMaxLimit = "DF812506" + qposParameters.getCtlsTransactionLimitValue();
-        String mcCtlsFloorLimit = "DF812306" + qposParameters.getCtlsTransactionFloorLimitValue();
-        String mcCtlsCvmLimit = "DF812606" + qposParameters.getCtlsTransactionCvmLimitValue(); //BuildConfig.CVM_REQUIRED_LIMIT;
-        mListCapabilities.add(tlvHeader
-                + mcCtlsAboveCvmLimitCapabilities
-                + mcCtlsUnderCvmLimitCapabilities
-                + mcCtlsNoOnDeviceMaxLimit
-                + mcCtlsOnDeviceMaxLimit
-                + mcCtlsFloorLimit
-                + mcCtlsCvmLimit);
-
-        logFlow("setListCapabillities() called with: mListCapabilities = [" + mListCapabilities + "]");
-    }
 
     public void getPosServicePin(String maskedPAN, String dateforTRX) {
         mPosService.getPin(1, 10, 8, "INGRESE PIN", maskedPAN, dateforTRX, 15);
@@ -835,13 +790,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 case TIMEOUT:
                     onRequestNoQposDetected();
                     break;
-                case CMD_TIMEOUT:
-                case CMD_NOT_AVAILABLE:
-                    dongleConnect.onRequestNoQposDetected();
-                    break;
-                case INPUT_INVALID:
-                    dongleConnect.onRequestNoQposDetected();
-                    break;
                 case UNKNOWN:
                     // NONE
                     break;
@@ -850,6 +798,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                         dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, error.name(), false));
                     }
                     break;
+                case CMD_TIMEOUT:
+                case CMD_NOT_AVAILABLE:
+                case INPUT_INVALID:
                 default:
                     dongleConnect.onRequestNoQposDetected();
                     break;
@@ -946,7 +897,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onReturnCustomConfigResult(final boolean isSuccess, final String result) {
         logFlow("onReturnCustomConfigResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
         dongleConnect.onReturnEmvConfigResult(isSuccess);
-//        mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, mListCapabilities);
     }
 
     @Override
@@ -982,22 +932,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onReturnUpdateEMVResult(final boolean isSuccess) {
         logFlow("onReturnUpdateEMVResult() called with: isSuccess = [" + isSuccess + "]");
-
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException exe) {
-            Log.e(TAG, "Error al detener el thread");
-            Thread.currentThread().interrupt();
-        }
-
-        if (isSuccess) {
-            mPosService.setOnlineTime(1000);
-            mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
-            if (dongleListener.checkDoTrade())
-                mPosService.doTrade(10, 30);
-            else
-                mPosService.doCheckCard(30, 10);
-        }
+        dongleListener.onEmvAidConfigUpdateResult(isSuccess);
     }
 
     @Override

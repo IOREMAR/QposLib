@@ -7,17 +7,19 @@ import java.util.List;
 
 public interface DongleListener {
 
+    boolean checkDoTrade();
+
     void onResultData(final Hashtable<String, String> datosOperacion, DongleListener.DoTradeResult entryMode);
 
     void onRespuestaDongle(final PosResult result);
 
     void seleccionEmvApp(final List<String> listEMVApps, AplicacionEmv aplicacionEmv);
 
-    void onSearchMifareCardResult(final Hashtable<String, String> hashtable);//NOSONAR
-
-    boolean checkDoTrade();
+    void onEmvAidConfigUpdateResult(boolean wasSuccessful);
 
     void onPinResult(final Hashtable<String, String> result);
+
+    void onSearchMifareCardResult(final Hashtable<String, String> hashtable);//NOSONAR
 
     void onBatchReadMifareCardResult(String s, Hashtable<String, List<String>> hashtable);//NOSONAR
 

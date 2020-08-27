@@ -6,6 +6,7 @@ import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
 import com.pagatodo.qposlib.pos.QposParameters;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -23,13 +24,15 @@ public interface PosInterface {
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
 
+    void setEmvAidUpdate(ArrayList<String> aidConfigList);
+
     void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
     void doTransaccionNextOperation(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
     void cancelOperacion();
 
-    void operacionFinalizada(final String ARPC);
+    void operacionFinalizada(final String arpc);
 
     Map<String, String> getIccTags();
 
