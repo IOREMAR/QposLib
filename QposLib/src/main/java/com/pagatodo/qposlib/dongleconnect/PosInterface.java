@@ -20,7 +20,7 @@ public interface PosInterface {
 
     String getPosInfo();
 
-    void getPin(final String maskedPAN);
+    void getPin(int maxLen, final String maskedPAN);
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
 

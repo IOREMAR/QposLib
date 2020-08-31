@@ -48,7 +48,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
     public static final String REQUIERE_PIN = "INGRESE PIN";
-    private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07", "5F36"};
+    private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07", "5F36", "9F06", "9F34", "8E"};
 
     private QPOSService mPosService;
     private DspreadDevicePOS mDevice;
@@ -148,9 +148,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void getPin(String maskedPAN) {
-        logFlow("getPin() called with: maskedPAN = [" + maskedPAN + "]");
-        mPosService.getPin(1, 10, 8, REQUIERE_PIN, maskedPAN, getDateforTRX(), 15);
+    public void getPin(int maxLen, final String maskedPAN) {
+        logFlow("getPin() called with: maxLen = [" + maxLen + "], maskedPAN = [" + maskedPAN + "]");
+        mPosService.getPin(1, 10, maxLen, REQUIERE_PIN, maskedPAN, getDateforTRX(), 15);
     }
 
     @Override
@@ -396,10 +396,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
     }
 
-
-    public void getPosServicePin(String maskedPAN, String dateforTRX) {
-        mPosService.getPin(1, 10, 8, "INGRESE PIN", maskedPAN, dateforTRX, 15);
-    }
 
     //Montón de métodos heredados de la librería del QPOS
 
@@ -725,7 +721,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
                 break;
             case DECLINED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.DECLINADO, "Tarjeta No Permitida", false));
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.DECLINADO, "Tarjeta Declinada", false));
                 break;
             case TERMINATED:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TERMINADO, "Operación Finalizada", false));
