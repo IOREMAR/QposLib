@@ -48,7 +48,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
     public static final String REQUIERE_PIN = "INGRESE PIN";
-    private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07", "5F36", "9F06", "9F34", "8E"};
+    private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07", "5F36", "9F06", "9F34", "8E", "9F10"};
 
     private QPOSService mPosService;
     private DspreadDevicePOS mDevice;
@@ -175,15 +175,16 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
             if (transactionAmountData.getTipoOperacion().equals("D")) {
                 mPosService.setQuickEmv(true);
-            } else if (transactionAmountData.getAmountIcon().equals("")) {
-                mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
+            } /*else if (transactionAmountData.getAmountIcon().equals("")) {
+
             } else {
                 mPosService.setQuickEmv(true);
-            }
+            }*/
 
             mPosService.setFormatId("0025");
             mPosService.setOnlineTime(1000);
             mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
+            mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
 
             if (dongleListener.checkDoTrade()) {
                 mPosService.doTrade(10, 30);
