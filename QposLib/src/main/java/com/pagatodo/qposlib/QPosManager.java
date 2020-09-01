@@ -173,7 +173,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         } else {
             this.transactionAmountData = transactionAmountData;
 
-            if (transactionAmountData.getTipoOperacion().equals("D")) {
+            /*if (transactionAmountData.getTipoOperacion().equals("D")) {
                 mPosService.setQuickEmv(true);
             } /*else if (transactionAmountData.getAmountIcon().equals("")) {
 
@@ -181,6 +181,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 mPosService.setQuickEmv(true);
             }*/
 
+            mPosService.setQuickEmv(true);
             mPosService.setFormatId("0025");
             mPosService.setOnlineTime(1000);
             mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
