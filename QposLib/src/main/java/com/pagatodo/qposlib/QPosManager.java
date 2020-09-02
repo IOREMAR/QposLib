@@ -657,8 +657,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onRequestSetAmount() {
-        logFlow("onRequestSetAmount() called");
-        mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
+        String amount = transactionAmountData.getAmount();
+        String cashback = transactionAmountData.getCashbackAmount();
+        String currencyCode = transactionAmountData.getCurrencyCode();
+        QPOSService.TransactionType transactionType = transactionAmountData.getTransactionType();
+
+        logFlow("onRequestSetAmount(): amount = [" + amount + "], cashback = [" + cashback + "], currencyCode = [" + currencyCode + "], transactionType = [" + transactionType + "]");
+        mPosService.setAmount(setDecimalesAmount(amount), setDecimalesAmount(cashback), currencyCode, transactionType, true);
     }
 
     @Override
