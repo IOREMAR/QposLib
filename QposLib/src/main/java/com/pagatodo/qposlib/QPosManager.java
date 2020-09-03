@@ -309,7 +309,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public Map<String, String> getIccTags() {
-        logFlow("getIccTags() returned: " + mEmvTags);
+        logFlow("getEmvTags() returned: " + mEmvTags);
         return mEmvTags;
     }
 
@@ -567,20 +567,22 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onDoTradeResult(final QPOSService.DoTradeResult doTradeResult, final Hashtable<String, String> decodeData) {
         logFlow("onDoTradeResult() called with: doTradeResult = [" + doTradeResult + "], decodeData = [" + decodeData + "]");
 
-        mEmvTags.clear();
-        mDecodeData = decodeData;
         mCurrentTradeResult = doTradeResult;
+        mDecodeData = decodeData;
 
         if (doTradeResult == QPOSService.DoTradeResult.NFC_ONLINE
                 || doTradeResult == QPOSService.DoTradeResult.NFC_OFFLINE) {
             String tlv = mPosService.getNFCBatchData().get("tlv");
             decodeData.put("iccdata", tlv);
+            mEmvTags = reciverEMVTags(DongleListener.DoTradeResult.NFC_ONLINE);
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.NFC_ONLINE);
         } else if (doTradeResult == QPOSService.DoTradeResult.ICC) {
             mPosService.doEmvApp(QPOSService.EmvOption.START);
         } else if (doTradeResult == QPOSService.DoTradeResult.MCR) {
+            mEmvTags.clear();
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.MCR);
         } else {
+            mEmvTags.clear();
             onFailTradeResult(doTradeResult);
         }
     }
@@ -704,9 +706,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onRequestOnlineProcess(String tlvString) {
         logFlow("onRequestOnlineProcess() called with: tlvString = [" + tlvString + "]");
 
-        mEmvTags = reciverEMVTags();
         mDecodeData = mPosService.anlysEmvIccData(tlvString);
         mDecodeData.put(ICCDecodeData.TLV.getLabel(), tlvString);
+        mEmvTags = reciverEMVTags(DongleListener.DoTradeResult.ICC);
         dongleListener.onResultData(mDecodeData, DongleListener.DoTradeResult.ICC);
     }
 
@@ -1239,14 +1241,17 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return formattedDate;
     }
 
-    public Map<String, String> reciverEMVTags() {
+    public Map<String, String> reciverEMVTags(DongleListener.DoTradeResult tradeResult) {
         final StringBuilder sBuilder = new StringBuilder();
 
         for (final String tag : TAGSEMV) {
             sBuilder.append(tag);
         }
 
-        Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT, 0, TAGSEMV.length, sBuilder.toString());
+        Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT,
+                tradeResult == DongleListener.DoTradeResult.ICC ? 0 : 1,
+                TAGSEMV.length,
+                sBuilder.toString());
         logFlow("reciverEMVTags: " + tags);
 
         if (tags.containsKey("tlv")) {
