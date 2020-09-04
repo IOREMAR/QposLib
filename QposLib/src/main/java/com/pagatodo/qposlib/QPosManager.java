@@ -362,6 +362,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             case NOT_ICC:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP, "Error al Leer el Chip", false));
                 break;
+            case NFC_DECLINED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_DECLINED, "Error al Leer la Tarjeta", false));
+                break;
             default:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, tradeResult.name(), Boolean.FALSE));
                 break;
@@ -726,6 +729,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onRequestTransactionResult() called with: transactionResult = [" + transactionResult + "]");
 
         switch (transactionResult) {
+            case APPROVED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
+                break;
             case CANCEL:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
                 break;
@@ -735,8 +741,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             case TERMINATED:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TERMINADO, "Operación Finalizada", false));
                 break;
-            case APPROVED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
+            case NFC_TERMINATED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_TERMINATED, "Error al Procesar la tarjeta", false));
                 break;
             default:
                 break;

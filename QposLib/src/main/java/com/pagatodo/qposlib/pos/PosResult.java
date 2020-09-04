@@ -33,6 +33,7 @@ public class PosResult {
         INVALID_ICC_DATA,
         FALLBACK,
         NFC_TERMINATED,
+        NFC_DECLINED,
         CARD_REMOVED,
         TRADE_LOG_FULL,
         TIMEOUT,
@@ -56,7 +57,7 @@ public class PosResult {
         ICC_ONLINE_TIMEOUT,
         AMOUNT_OUT_OF_LIMIT;
 
-        private PosTransactionResult() {
+        PosTransactionResult() {
         }
     }
 
