@@ -2,6 +2,8 @@ package com.pagatodo.qposlib.dongleconnect;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
 import com.pagatodo.qposlib.pos.QposParameters;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
@@ -25,6 +27,8 @@ public interface PosInterface {
     void getSessionKeys(final String clavePublicaFile, final Context context);
 
     void setEmvAidUpdate(ArrayList<String> aidConfigList);
+
+    void setAidTlvUpdate(@NonNull String[] aidTlvList);
 
     void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 

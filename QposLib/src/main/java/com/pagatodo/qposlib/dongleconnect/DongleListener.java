@@ -17,6 +17,8 @@ public interface DongleListener {
 
     void onEmvAidConfigUpdateResult(boolean wasSuccessful);
 
+    void onAidUpdateFinished();
+
     void onPinResult(final Hashtable<String, String> result);
 
     void onSearchMifareCardResult(final Hashtable<String, String> hashtable);//NOSONAR

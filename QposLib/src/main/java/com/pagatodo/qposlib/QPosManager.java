@@ -7,6 +7,9 @@ import android.os.Parcelable;
 import android.util.ArrayMap;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.core.util.Pair;
+
 import com.bbpos.bbdevice.BBDeviceController;
 import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
@@ -14,6 +17,7 @@ import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
+import com.pagatodo.qposlib.emv.EmvTags;
 import com.pagatodo.qposlib.pos.ICCDecodeData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
 import com.pagatodo.qposlib.pos.PosResult;
@@ -31,6 +35,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -48,7 +53,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
     public static final String REQUIERE_PIN = "INGRESE PIN";
-    private static final String[] TAGSEMV = {"4F", "5F20", "9F12", "5A", "9F27", "9F26", "95", "9B", "5F28", "9F07", "5F36", "9F06", "9F34", "8E", "9F10"};
 
     private QPOSService mPosService;
     private DspreadDevicePOS mDevice;
@@ -58,8 +62,12 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private Hashtable<String, String> mDecodeData;
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
+    private String[] aidTlvList;
+
+    private int aidListCount;
     private boolean isUpdatingFirmware;
     private boolean isLogEnabled;
+    private boolean isUpdatingAid;
 
     public void setQposDongleListener(DongleListener listener) {
         dongleListener = listener;
@@ -282,6 +290,27 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, aidConfigList);
     }
 
+    @Override
+    public void setAidTlvUpdate(@NonNull String[] aidTlvList) {
+        logFlow("setAidTlvUpdate() called with: aidTlvList = [" + Arrays.toString(aidTlvList) + "]");
+        this.aidTlvList = aidTlvList;
+        isUpdatingAid = true;
+        aidListCount = 0;
+        updateEmvAid();
+    }
+
+    private void updateEmvAid() {
+        if (aidListCount < aidTlvList.length) {
+            Log.d(TAG, "updateEmvAid: tlv = " + aidTlvList[aidListCount]);
+            mPosService.updateEmvAPPByTlv(QPOSService.EMVDataOperation.update, aidTlvList[aidListCount]);
+            Log.d(TAG, "updateEmvAid: count = " + aidListCount);
+            aidListCount++;
+        } else {
+            isUpdatingAid = false;
+            dongleListener.onAidUpdateFinished();
+        }
+    }
+
     public int updateFirmware(byte[] dataToUpdate, String file) {
         int result = mPosService.updatePosFirmware(dataToUpdate, file);
         if (result == 0) {
@@ -401,13 +430,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
     }
 
-
     //Montón de métodos heredados de la librería del QPOS
-
-//    @Override
-//    public void onRequestCvmApp(Hashtable<String, String> values) {
-//        logFlow("onRequestCvmApp() called with: values = [" + values + "]");
-//    }
 
     @Override
     public void onQposTestSelfCommandResult(final boolean isSuccess, final String datas) {
@@ -802,7 +825,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     onRequestNoQposDetected();
                     break;
                 case UNKNOWN:
-                    // NONE
+                    dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.UNKNOWN, error.name(), false));
                     break;
                 case DEVICE_RESET:
                     if (transactionAmountData == null) {
@@ -943,7 +966,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onReturnUpdateEMVResult(final boolean isSuccess) {
         logFlow("onReturnUpdateEMVResult() called with: isSuccess = [" + isSuccess + "]");
-        dongleListener.onEmvAidConfigUpdateResult(isSuccess);
+        if (isUpdatingAid) {
+            updateEmvAid();
+        } else {
+            dongleListener.onEmvAidConfigUpdateResult(isSuccess);
+        }
     }
 
     @Override
@@ -1248,16 +1275,28 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public Map<String, String> reciverEMVTags(DongleListener.DoTradeResult tradeResult) {
-        final StringBuilder sBuilder = new StringBuilder();
-
-        for (final String tag : TAGSEMV) {
-            sBuilder.append(tag);
-        }
+        Pair<String, Integer> pair = EmvTags.getAsString(
+                EmvTags.APPLICATION_CRYPTOGRAM,
+                EmvTags.APPLICATION_DEDICATED_FILE_NAME,
+                EmvTags.APPLICATION_IDENTIFIER,
+                EmvTags.APPLICATION_PREFERRED_NAME,
+                EmvTags.APPLICATION_USAGE_CONTROL,
+                EmvTags.CARDHOLDER_NAME,
+                EmvTags.CARDHOLDER_VERIFICATION_METHOD_LIST,
+                EmvTags.CARDHOLDER_VERIFICATION_RESULTS,
+                EmvTags.CRYPTOGRAM_INFORMATION_DATA,
+                EmvTags.ISSUER_APPLICATION_DATA,
+                EmvTags.ISSUER_ACTION_CODE_DEFAULT,
+                EmvTags.ISSUER_ACTION_CODE_DENIAL,
+                EmvTags.ISSUER_ACTION_CODE_ONLINE,
+                EmvTags.ISSUER_COUNTRY_CODE,
+                EmvTags.TERMINAL_VERIFICATION_RESULTS,
+                EmvTags.TRANSACTION_CURRENCY_EXPONENT,
+                EmvTags.TRANSACTION_STATUS_INDICATOR
+        );
 
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT,
-                tradeResult == DongleListener.DoTradeResult.ICC ? 0 : 1,
-                TAGSEMV.length,
-                sBuilder.toString());
+                tradeResult == DongleListener.DoTradeResult.ICC ? 0 : 1, pair.second, pair.first);
         logFlow("reciverEMVTags: " + tags);
 
         if (tags.containsKey("tlv")) {
