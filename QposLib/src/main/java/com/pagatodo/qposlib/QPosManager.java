@@ -1281,7 +1281,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.APPLICATION_IDENTIFIER,
                 EmvTags.APPLICATION_PREFERRED_NAME,
                 EmvTags.APPLICATION_USAGE_CONTROL,
-                EmvTags.CARDHOLDER_NAME,
                 EmvTags.CARDHOLDER_VERIFICATION_METHOD_LIST,
                 EmvTags.CARDHOLDER_VERIFICATION_RESULTS,
                 EmvTags.CRYPTOGRAM_INFORMATION_DATA,
