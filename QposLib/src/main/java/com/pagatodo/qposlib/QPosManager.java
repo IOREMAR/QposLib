@@ -301,9 +301,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     private void updateEmvAid() {
         if (aidListCount < aidTlvList.length) {
-            Log.d(TAG, "updateEmvAid: tlv = " + aidTlvList[aidListCount]);
+//            Log.d(TAG, "updateEmvAid: tlv = " + aidTlvList[aidListCount]);
             mPosService.updateEmvAPPByTlv(QPOSService.EMVDataOperation.update, aidTlvList[aidListCount]);
-            Log.d(TAG, "updateEmvAid: count = " + aidListCount);
+//            Log.d(TAG, "updateEmvAid: count = " + aidListCount);
             aidListCount++;
         } else {
             isUpdatingAid = false;
