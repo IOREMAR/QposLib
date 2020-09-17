@@ -596,7 +596,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             String tlv = mPosService.getNFCBatchData().get("tlv");
             decodeData.put("iccdata", tlv);
             mEmvTags = reciverEMVTags(DongleListener.DoTradeResult.NFC_ONLINE);
-
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.NFC_ONLINE);
         } else if (doTradeResult == QPOSService.DoTradeResult.ICC) {
             mPosService.doEmvApp(QPOSService.EmvOption.START);
@@ -1277,6 +1276,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.APPLICATION_IDENTIFIER,
                 EmvTags.APPLICATION_PREFERRED_NAME,
                 EmvTags.CARD_APPLICATION_VERSION,
+                EmvTags.APPLICATION_EXPIRATION_DATE,
                 EmvTags.APPLICATION_PRIORITY_INDICATOR,
                 EmvTags.APPLICATION_USAGE_CONTROL,
                 EmvTags.APPLICATION_INTERCHANGE_PROFILE,
@@ -1289,7 +1289,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.ISSUER_ACTION_CODE_ONLINE,
                 EmvTags.ISSUER_COUNTRY_CODE,
                 EmvTags.TERMINAL_VERIFICATION_RESULTS,
-                EmvTags.TRANSACTION_CURRENCY_EXPONENT,
                 EmvTags.TRANSACTION_STATUS_INDICATOR
         );
 
