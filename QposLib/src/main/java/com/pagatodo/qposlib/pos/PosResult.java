@@ -72,4 +72,13 @@ public class PosResult {
     public boolean isCorrect() {
         return correct;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "response=" + responce +
+                ", correct=" + correct +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }
