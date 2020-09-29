@@ -596,6 +596,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             String tlv = mPosService.getNFCBatchData().get("tlv");
             decodeData.put("iccdata", tlv);
             mEmvTags = reciverEMVTags(DongleListener.DoTradeResult.NFC_ONLINE);
+
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.NFC_ONLINE);
         } else if (doTradeResult == QPOSService.DoTradeResult.ICC) {
             mPosService.doEmvApp(QPOSService.EmvOption.START);
@@ -1275,7 +1276,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.APPLICATION_DEDICATED_FILE_NAME,
                 EmvTags.APPLICATION_IDENTIFIER,
                 EmvTags.APPLICATION_PREFERRED_NAME,
+                EmvTags.CARD_APPLICATION_VERSION,
+                EmvTags.APPLICATION_PRIORITY_INDICATOR,
                 EmvTags.APPLICATION_USAGE_CONTROL,
+                EmvTags.APPLICATION_INTERCHANGE_PROFILE,
                 EmvTags.CARDHOLDER_VERIFICATION_METHOD_LIST,
                 EmvTags.CARDHOLDER_VERIFICATION_RESULTS,
                 EmvTags.CRYPTOGRAM_INFORMATION_DATA,
