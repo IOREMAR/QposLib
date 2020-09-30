@@ -1,5 +1,7 @@
 package com.pagatodo.qposlib.dongleconnect;
 
+import androidx.core.util.Consumer;
+
 import com.pagatodo.qposlib.pos.PosResult;
 
 import java.util.Hashtable;
@@ -13,7 +15,7 @@ public interface DongleListener {
 
     void onRespuestaDongle(final PosResult result);
 
-    void seleccionEmvApp(final List<String> listEMVApps, AplicacionEmv aplicacionEmv);
+    void seleccionEmvApp(final List<String> listEMVApps, final Consumer<Integer> indexConsumer);
 
     void onEmvAidConfigUpdateResult(boolean wasSuccessful);
 

@@ -8,12 +8,12 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Consumer;
 import androidx.core.util.Pair;
 
 import com.bbpos.bbdevice.BBDeviceController;
 import com.dspread.xpos.QPOSService;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
-import com.pagatodo.qposlib.dongleconnect.AplicacionEmv;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
@@ -696,12 +696,17 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (listEMVApps.size() == 1) {
             mPosService.selectEmvApp(0);
         } else if (listEMVApps.size() > 1) {
-            final AplicacionEmv aplicacionEmv = new AplicacionEmv() {
+            final Consumer<Integer> aplicacionEmv = new Consumer<Integer>() {
                 @Override
-                public void seleccionAppEmv(final int position) {
-                    mPosService.selectEmvApp(position);
+                public void accept(Integer position) {
+                    if (position < 0) {
+                        mPosService.cancelSelectEmvApp();
+                    } else {
+                        mPosService.selectEmvApp(position);
+                    }
                 }
             };
+
             dongleListener.seleccionEmvApp(listEMVApps, aplicacionEmv);
         }
     }
