@@ -1271,25 +1271,24 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     public Map<String, String> reciverEMVTags(DongleListener.DoTradeResult tradeResult) {
         Pair<String, Integer> pair = EmvTags.getAsString(
-                EmvTags.APPLICATION_CRYPTOGRAM,
-                EmvTags.APPLICATION_DEDICATED_FILE_NAME,
                 EmvTags.APPLICATION_IDENTIFIER,
+                EmvTags.APPLICATION_DEDICATED_FILE_NAME,
                 EmvTags.APPLICATION_PREFERRED_NAME,
-                EmvTags.CARD_APPLICATION_VERSION,
-                EmvTags.APPLICATION_EXPIRATION_DATE,
                 EmvTags.APPLICATION_PRIORITY_INDICATOR,
-                EmvTags.APPLICATION_USAGE_CONTROL,
                 EmvTags.APPLICATION_INTERCHANGE_PROFILE,
+                EmvTags.APPLICATION_USAGE_CONTROL,
+                EmvTags.APPLICATION_CRYPTOGRAM,
+                EmvTags.CRYPTOGRAM_INFORMATION_DATA,
+                EmvTags.CARD_APPLICATION_VERSION,
                 EmvTags.CARDHOLDER_VERIFICATION_METHOD_LIST,
                 EmvTags.CARDHOLDER_VERIFICATION_RESULTS,
-                EmvTags.CRYPTOGRAM_INFORMATION_DATA,
                 EmvTags.ISSUER_APPLICATION_DATA,
                 EmvTags.ISSUER_ACTION_CODE_DEFAULT,
                 EmvTags.ISSUER_ACTION_CODE_DENIAL,
                 EmvTags.ISSUER_ACTION_CODE_ONLINE,
-                EmvTags.ISSUER_COUNTRY_CODE,
                 EmvTags.TERMINAL_VERIFICATION_RESULTS,
-                EmvTags.TRANSACTION_STATUS_INDICATOR
+                EmvTags.TRANSACTION_STATUS_INDICATOR,
+                EmvTags.ISSUER_COUNTRY_CODE
         );
 
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT,

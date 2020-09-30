@@ -30,7 +30,7 @@ public enum EmvTags {
         this.hex = hex;
     }
 
-    public String getHex() {
+    public final String getHex() {
         return hex;
     }
 
