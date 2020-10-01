@@ -699,7 +699,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             final Consumer<Integer> aplicacionEmv = new Consumer<Integer>() {
                 @Override
                 public void accept(Integer position) {
-                    if (position < 0) {
+                    logFlow("onRequestSelectEmvApp: position = [" + position + "]");
+
+                    if (position < 0 || position > listEMVApps.size()) {
                         mPosService.cancelSelectEmvApp();
                     } else {
                         mPosService.selectEmvApp(position);
