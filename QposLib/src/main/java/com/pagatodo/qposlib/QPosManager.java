@@ -857,6 +857,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onReturnReversalData(final String tlv) {
         logFlow("onReturnReversalData() called with: tlv = [" + tlv + "]");
+        dongleListener.onSyncRequested(tlv);
     }
 
     @Override

@@ -37,6 +37,8 @@ public interface DongleListener {
 
     void onFinishMifareCardResult(boolean finish);
 
+    void onSyncRequested(final String data);
+
     enum DoTradeResult {
         NONE,
         MCR,
