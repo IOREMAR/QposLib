@@ -181,11 +181,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         } else {
             this.transactionAmountData = transactionAmountData;
 
-            if (transactionAmountData.getTipoOperacion().equals("V")) {
-                mPosService.setQuickEmv(false);
-            } else {
-                mPosService.setQuickEmv(true);
-            }
+            mPosService.setQuickEmv(transactionAmountData.getTipoOperacion().equalsIgnoreCase("X")
+                    || transactionAmountData.getTipoOperacion().equalsIgnoreCase("Z"));
 
             mPosService.setFormatId("0025");
             mPosService.setOnlineTime(1000);
@@ -1296,7 +1293,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.ISSUER_ACTION_CODE_ONLINE,
                 EmvTags.TERMINAL_VERIFICATION_RESULTS,
                 EmvTags.TRANSACTION_STATUS_INDICATOR,
-                EmvTags.ISSUER_COUNTRY_CODE
+                EmvTags.ISSUER_COUNTRY_CODE,
+                EmvTags.TERMINAL_CAPABILITIES,
+                EmvTags.TRANSACTION_TYPE
         );
 
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT,
