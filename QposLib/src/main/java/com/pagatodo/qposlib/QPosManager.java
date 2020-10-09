@@ -1294,7 +1294,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.TERMINAL_VERIFICATION_RESULTS,
                 EmvTags.TRANSACTION_STATUS_INDICATOR,
                 EmvTags.ISSUER_COUNTRY_CODE,
-                EmvTags.TERMINAL_CAPABILITIES,
                 EmvTags.TRANSACTION_TYPE
         );
 

@@ -26,10 +26,6 @@ public enum EmvTags {
     TRANSACTION_STATUS_INDICATOR("9B"),
     TRANSACTION_TYPE("9C");
 
-//    CARD_CVM_REQUIRED_CAPABILITY("DF8118"),
-//    CARD_CVM_NO_REQUIRED_CAPABILITY("DF8119"),
-//    KERNEL_4_READER_CAPABILITIES("9F6D");
-
     private final String hex;
 
     EmvTags(String hex) {
