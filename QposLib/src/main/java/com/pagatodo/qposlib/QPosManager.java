@@ -392,20 +392,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
     }
 
-    public void onFailTradeResult() {
-        onFailTradeResult(mCurrentTradeResult);
-    }
-
-    public void onFailTradeResult(String tradeResult) {
-        switch (tradeResult) {
-            case "ICC":
-                onFailTradeResult(QPOSService.DoTradeResult.ICC);
-                break;
-            default:
-                break;
-        }
-    }
-
     public void setPosServiceKeyValue(String keyValue) {
         mPosService.setKeyValue(keyValue);
     }
@@ -764,7 +750,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TERMINADO, "Operación Finalizada", false));
                 break;
             case NFC_TERMINATED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_TERMINATED, "Error al Procesar la tarjeta", false));
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_TERMINATED, "Error al Procesar la Tarjeta", false));
+                break;
+            case SELECT_APP_FAIL:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CARD_BLOCKED_OR_NO_EMV_APPS, "Error al Leer la Tarjeta", false));
                 break;
             default:
                 break;
@@ -1294,6 +1283,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.TERMINAL_VERIFICATION_RESULTS,
                 EmvTags.TRANSACTION_STATUS_INDICATOR,
                 EmvTags.ISSUER_COUNTRY_CODE,
+                EmvTags.TERMINAL_CAPABILITIES,
                 EmvTags.TRANSACTION_TYPE
         );
 
