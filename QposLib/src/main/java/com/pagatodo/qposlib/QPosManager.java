@@ -66,7 +66,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     private int aidListCount;
     private boolean isUpdatingFirmware;
-    private boolean isLogEnabled;
+    private final boolean isLogEnabled;
     private boolean isUpdatingAid;
 
     public void setQposDongleListener(DongleListener listener) {
@@ -203,11 +203,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (mPosService.isQposPresent()) {
             this.transactionAmountData = transactionAmountData;
 
-            if (transactionAmountData.getTipoOperacion().equals("V")) {
-                mPosService.setQuickEmv(true);
-            } else {
-                mPosService.setQuickEmv(false);
-            }
+            mPosService.setQuickEmv(transactionAmountData.getTipoOperacion().equalsIgnoreCase("X")
+                    || transactionAmountData.getTipoOperacion().equalsIgnoreCase("Z"));
 
             mPosService.setFormatId("0025");
             mPosService.doEmvApp(QPOSService.EmvOption.START);
@@ -1283,8 +1280,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.TERMINAL_VERIFICATION_RESULTS,
                 EmvTags.TRANSACTION_STATUS_INDICATOR,
                 EmvTags.ISSUER_COUNTRY_CODE,
-                EmvTags.TERMINAL_CAPABILITIES,
-                EmvTags.TRANSACTION_TYPE
+                EmvTags.TERMINAL_CAPABILITIES
         );
 
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT,

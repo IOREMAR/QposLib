@@ -84,10 +84,11 @@ public class TransactionAmountData {
     }
 
     public QPOSService.TransactionType getTransactionType() {
-        if ("CASHBACK".equals(transactionType)) {
+        if (transactionType.equalsIgnoreCase("CASHBACK")) {
             return QPOSService.TransactionType.CASHBACK;
-        }
-        if (this.transactionType.equals("INQUIRY")) {
+        } else if (transactionType.equalsIgnoreCase("REFUND")) {
+            return QPOSService.TransactionType.REFUND;
+        } else if (transactionType.equalsIgnoreCase("INQUIRY")) {
             return QPOSService.TransactionType.INQUIRY;
         } else {
             return QPOSService.TransactionType.GOODS;
