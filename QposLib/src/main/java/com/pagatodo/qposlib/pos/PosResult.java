@@ -55,7 +55,8 @@ public class PosResult {
         EMV_CAPK_CFG_ERROR,
         APDU_ERROR,
         ICC_ONLINE_TIMEOUT,
-        AMOUNT_OUT_OF_LIMIT;
+        AMOUNT_OUT_OF_LIMIT,
+        TRY_ANOTHER_INTERFACE;
 
         PosTransactionResult() {
         }
