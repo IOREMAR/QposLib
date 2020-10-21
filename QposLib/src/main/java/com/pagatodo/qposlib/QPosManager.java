@@ -383,6 +383,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             case NFC_DECLINED:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_DECLINED, "Error al Leer la Tarjeta", false));
                 break;
+            case TRY_ANOTHER_INTERFACE:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TRY_ANOTHER_INTERFACE, "Pase Por Contacto o Utilice Otra Tarjeta", false));
+                break;
             default:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.ERROR_DISPOSITIVO, tradeResult.name(), Boolean.FALSE));
                 break;
@@ -1266,6 +1269,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.APPLICATION_DEDICATED_FILE_NAME,
                 EmvTags.APPLICATION_PREFERRED_NAME,
                 EmvTags.APPLICATION_PRIORITY_INDICATOR,
+                EmvTags.APPLICATION_EXPIRATION_DATE,
                 EmvTags.APPLICATION_INTERCHANGE_PROFILE,
                 EmvTags.APPLICATION_USAGE_CONTROL,
                 EmvTags.APPLICATION_CRYPTOGRAM,
