@@ -11,6 +11,4 @@ public interface DongleConnect {
     void onRequestNoQposDetected();
 
     void onSessionKeysObtenidas();
-
-    void onReturnEmvConfigResult(boolean wasSuccessful);
 }

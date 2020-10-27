@@ -3,6 +3,7 @@ package com.pagatodo.qposlib.dongleconnect;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Consumer;
 
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
 import com.pagatodo.qposlib.pos.QposParameters;
@@ -45,6 +46,8 @@ public interface PosInterface {
     void deviceCancel();
 
     Hashtable<String, String> getQposIdHash();
+
+    void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex, Consumer<Boolean> onReturnCustomConfigConsumer);
 
     int updateFirmware(final byte[] dataToUpdate, final String file);
 

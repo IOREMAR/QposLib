@@ -51,7 +51,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
 
     protected static final int RC_HANDLE_INTERNET_PERM = 1;
     protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
-    private CountDownTimer connect_Time = new CountDownTimer(TIMER_LONG, TIMER_END) {
+    private final CountDownTimer connect_Time = new CountDownTimer(TIMER_LONG, TIMER_END) {
         @Override
         public void onTick(long millisUntilFinished) {
             if (isConnected) {
@@ -274,11 +274,6 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
         setResult(RESULT_OK, data);
         finish();
 //        cambiaDeActividad(LoginPCIActivity.class);
-    }
-
-    @Override
-    public void onReturnEmvConfigResult(boolean wasSuccessful) {
-
     }
 
     public void restaurarEnLugarDeNada() {

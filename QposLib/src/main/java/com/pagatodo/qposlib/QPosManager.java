@@ -54,6 +54,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private final DspreadDevicePOS<Parcelable> mDevicePos;
     public static final String REQUIERE_PIN = "INGRESE PIN";
 
+    private Consumer<Boolean> onReturnCustomConfigConsumer;
+
     private QPOSService mPosService;
     private DspreadDevicePOS mDevice;
     private TransactionAmountData transactionAmountData;
@@ -85,6 +87,14 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public Hashtable<String, String> getQposIdHash() {
         logFlow("getQposIdHash() returned: " + mQposIdHash);
         return mQposIdHash;
+    }
+
+    @Override
+    public void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex, Consumer<Boolean> onReturnCustomConfigConsumer) {
+        logFlow("setReaderEmvConfig() called with: emvCfgAppHex = [" + emvCfgAppHex + "]");
+        logFlow("setReaderEmvConfig() called with: emvCfgCapkHex = [" + emvCfgCapkHex + "]");
+        this.onReturnCustomConfigConsumer = onReturnCustomConfigConsumer;
+        mPosService.updateEmvConfig(emvCfgAppHex, emvCfgCapkHex);
     }
 
     @Override
@@ -265,12 +275,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     public boolean isTransaccionEqualToD(TransactionAmountData transactionAmountData) {
         return transactionAmountData.getTipoOperacion().equals("D");
-    }
-
-    public void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex) {
-        logFlow("setReaderEmvConfig() called with: emvCfgAppHex = [" + emvCfgAppHex + "]");
-        logFlow("setReaderEmvConfig() called with: emvCfgCapkHex = [" + emvCfgCapkHex + "]");
-        mPosService.updateEmvConfig(emvCfgAppHex, emvCfgCapkHex);
     }
 
     @Override
@@ -919,7 +923,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onReturnCustomConfigResult(final boolean isSuccess, final String result) {
         logFlow("onReturnCustomConfigResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
-        dongleConnect.onReturnEmvConfigResult(isSuccess);
+        onReturnCustomConfigConsumer.accept(isSuccess);
+        onReturnCustomConfigConsumer = null;
     }
 
     @Override
@@ -1269,7 +1274,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.APPLICATION_DEDICATED_FILE_NAME,
                 EmvTags.APPLICATION_PREFERRED_NAME,
                 EmvTags.APPLICATION_PRIORITY_INDICATOR,
-                EmvTags.APPLICATION_EXPIRATION_DATE,
+                EmvTags.TRACK2_EQUIVALENT_DATA,
                 EmvTags.APPLICATION_INTERCHANGE_PROFILE,
                 EmvTags.APPLICATION_USAGE_CONTROL,
                 EmvTags.APPLICATION_CRYPTOGRAM,
