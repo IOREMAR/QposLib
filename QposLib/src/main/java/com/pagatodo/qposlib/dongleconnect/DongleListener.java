@@ -49,7 +49,8 @@ public interface DongleListener {
         NO_UPDATE_WORK_KEY,
         NFC_ONLINE,
         NFC_OFFLINE,
-        NFC_DECLINED;
+        NFC_DECLINED,
+        SEE_PHONE;
 
         DoTradeResult() {
         }

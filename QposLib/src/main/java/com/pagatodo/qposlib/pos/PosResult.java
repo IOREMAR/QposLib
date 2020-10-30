@@ -56,7 +56,8 @@ public class PosResult {
         APDU_ERROR,
         ICC_ONLINE_TIMEOUT,
         AMOUNT_OUT_OF_LIMIT,
-        TRY_ANOTHER_INTERFACE;
+        TRY_ANOTHER_INTERFACE,
+        SEE_PHONE;
 
         PosTransactionResult() {
         }

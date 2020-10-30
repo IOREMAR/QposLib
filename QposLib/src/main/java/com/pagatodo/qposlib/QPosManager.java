@@ -384,9 +384,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             case NOT_ICC:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NO_CHIP, "Error al Leer el Chip", false));
                 break;
-            case NFC_DECLINED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_DECLINED, "Error al Leer la Tarjeta", false));
-                break;
             case TRY_ANOTHER_INTERFACE:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TRY_ANOTHER_INTERFACE, "Pase Por Contacto o Utilice Otra Tarjeta", false));
                 break;
@@ -577,6 +574,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         mCurrentTradeResult = doTradeResult;
         mDecodeData = decodeData;
+        mEmvTags.clear();
 
         if (doTradeResult == QPOSService.DoTradeResult.NFC_ONLINE
                 || doTradeResult == QPOSService.DoTradeResult.NFC_OFFLINE) {
@@ -587,10 +585,12 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         } else if (doTradeResult == QPOSService.DoTradeResult.ICC) {
             mPosService.doEmvApp(QPOSService.EmvOption.START);
         } else if (doTradeResult == QPOSService.DoTradeResult.MCR) {
-            mEmvTags.clear();
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.MCR);
+        } else if (doTradeResult == QPOSService.DoTradeResult.NFC_DECLINED) {
+            dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.NFC_DECLINED);
+        } else if (doTradeResult == QPOSService.DoTradeResult.PLS_SEE_PHONE) {
+            dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.SEE_PHONE);
         } else {
-            mEmvTags.clear();
             onFailTradeResult(doTradeResult);
         }
     }
