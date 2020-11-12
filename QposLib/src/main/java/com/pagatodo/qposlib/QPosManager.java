@@ -3,6 +3,8 @@ package com.pagatodo.qposlib;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Parcelable;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -55,6 +57,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public static final String REQUIERE_PIN = "INGRESE PIN";
 
     private Consumer<Boolean> onReturnCustomConfigConsumer;
+    private UpdateThread updateThread;
 
     private QPOSService mPosService;
     private DspreadDevicePOS mDevice;
@@ -67,9 +70,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private String[] aidTlvList;
 
     private int aidListCount;
+    private boolean isUpdatingAid;
     private boolean isUpdatingFirmware;
     private final boolean isLogEnabled;
-    private boolean isUpdatingAid;
 
     public void setQposDongleListener(DongleListener listener) {
         dongleListener = listener;
@@ -131,9 +134,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     public void closeCommunication() {
-        logFlow("closeCommunication() called");
+        logFlow("closeCommunication() called: isUpdatingFirmware = [" + isUpdatingFirmware + ']');
 
-        if (mPosService != null) {
+        // TODO: This method is also called when updating the firmware
+        if (isUpdatingFirmware) {
+        } else if (mPosService != null) {
             mQStatePOS.updateState(POSConnectionState.STATE_POS.CLOSE);
 
             switch (mDevice.getCommunicationMode()) {
@@ -304,20 +309,20 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
     }
 
-    public int updateFirmware(byte[] dataToUpdate, String file) {
+    public int updateFirmware(@NonNull Context context, byte[] dataToUpdate, String file) {
         int result = mPosService.updatePosFirmware(dataToUpdate, file);
-        if (result == 0) {
-            isUpdatingFirmware = true;
+        logFlow("updateFirmware: " + result);
+
+        if (result != 0) {
+            firmwareUpdate.onPosFirmwareUpdateResult(false, "Device is not charging");
+        } else {
+            updateThread = new UpdateThread(context);
+            updateThread.setContinueFlag(true);
+            updateThread.start();
+//            isUpdatingFirmware = true;
         }
 
-        logFlow("updateFirmware() returned: " + result);
         return result;
-    }
-
-    public int getUpdateProgress() {
-        int i = mPosService.getUpdateProgress();
-        logFlow("getUpdateProgress() returned: " + i);
-        return i;
     }
 
     public void cancelOperacion() {
@@ -783,7 +788,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onRequestQposDisconnected() {
-        logFlow("onRequestQposDisconnected() called");
+        logFlow("onRequestQposDisconnected() called: isUpdatingFirmware = [" + isUpdatingFirmware + ']');
 
         // TODO: This method is also called just before updating the firmware
         if (!isUpdatingFirmware) {
@@ -809,8 +814,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         this.cancelOperacion();
 
         if (isUpdatingFirmware) {
-            isUpdatingFirmware = false;
-            firmwareUpdate.onPosFirmwareUpdatedFailed(error.name());
+//            isUpdatingFirmware = false;
+            updateThread.setContinueFlag(false);
+            firmwareUpdate.onPosFirmwareUpdateResult(false, error.name());
         } else if (mDecodeData != null) {
             switch (error) {
                 case TIMEOUT:
@@ -1035,12 +1041,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onUpdatePosFirmwareResult(QPOSService.UpdateInformationResult result) {
         logFlow("onUpdatePosFirmwareResult() called with: result = [" + result + "]");
-        isUpdatingFirmware = false;
+        updateThread.setContinueFlag(false);
+//        isUpdatingFirmware = false;
 
-        if (result == QPOSService.UpdateInformationResult.UPDATE_SUCCESS) {
-            firmwareUpdate.onPosFirmwareUpdated();
+        if (result != QPOSService.UpdateInformationResult.UPDATE_SUCCESS) {
+            firmwareUpdate.onPosFirmwareUpdateResult(false, result.name());
         } else {
-            firmwareUpdate.onPosFirmwareUpdatedFailed(result.name());
+            firmwareUpdate.onPosFirmwareUpdateResult(true, null);
         }
     }
 
@@ -1307,6 +1314,52 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private void logFlow(String whatToLog) {
         if (isLogEnabled) {
             Log.d(TAG, whatToLog);
+        }
+    }
+
+    private class UpdateThread extends Thread {
+        private boolean continueFlag = true;
+        private Handler handler;
+
+        private UpdateThread(@NonNull Context context) {
+            handler = new Handler(context.getMainLooper()) {
+                @Override
+                public void handleMessage(@NonNull Message msg) {
+                    super.handleMessage(msg);
+                    QPosManager.this.firmwareUpdate.onPosFirmwareUpdateProgress(msg.what);
+                }
+            };
+        }
+
+        @Override
+        public void run() {
+            super.run();
+
+            do {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                }
+
+                if (qposDspread == null) {
+                    continueFlag = false;
+                } else {
+                    int percentage = mPosService.getUpdateProgress();
+                    logFlow("updateProgress: " + percentage);
+
+                    if (percentage < 100) {
+                        handler.sendEmptyMessage(percentage);
+                    } else {
+                        continueFlag = false;
+                    }
+                }
+            } while (continueFlag);
+            handler = null;
+        }
+
+        public void setContinueFlag(boolean continueFlag) {
+            this.continueFlag = continueFlag;
+            isUpdatingFirmware = continueFlag;
         }
     }
 }
