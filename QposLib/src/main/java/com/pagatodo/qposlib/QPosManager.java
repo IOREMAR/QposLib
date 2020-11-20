@@ -814,7 +814,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         this.cancelOperacion();
 
         if (isUpdatingFirmware) {
-//            isUpdatingFirmware = false;
             updateThread.setContinueFlag(false);
             firmwareUpdate.onPosFirmwareUpdateResult(false, error.name());
         } else if (mDecodeData != null) {
@@ -840,6 +839,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         } else if (error == QPOSService.Error.CMD_TIMEOUT) {
             PosResult posResult = new PosResult(PosResult.PosTransactionResult.CMD_TIEMPOFINALIZADO,
                     "No se detectó la tarjeta",
+                    false);
+            dongleListener.onRespuestaDongle(posResult);
+        } else if (error == QPOSService.Error.INPUT_INVALID) {
+            PosResult posResult = new PosResult(PosResult.PosTransactionResult.INPUT_INVALID,
+                    "Monto Inválido",
                     false);
             dongleListener.onRespuestaDongle(posResult);
         }
@@ -1219,6 +1223,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onTradeCancelled() {
         logFlow("onTradeCancelled() called");
+        dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
     }
 
     @Override
@@ -1254,7 +1259,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onReturnGetConnectedShutDownTimeResult(String b) {
         logFlow("onReturnGetConnectedShutDownTimeResult() called with: b = [" + b + "]");
+    }
 
+    @Override
+    public void onRequestNFCBatchData(QPOSService.TransactionResult transactionResult, String tlv) {
+        logFlow("onRequestNFCBatchData() called with: transactionResult = [" + transactionResult + "], tlv = [" + tlv + "]");
     }
 
     private String setDecimalesAmount(final String monto) {
