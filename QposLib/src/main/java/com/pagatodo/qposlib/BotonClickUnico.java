@@ -7,7 +7,7 @@ import android.util.AttributeSet;
 
 
 
-public class BotonClickUnico extends android.support.v7.widget.AppCompatButton {
+public class BotonClickUnico extends androidx.appcompat.widget.AppCompatButton {
     public static final int TIEMPO_ENTRE_CLICKS = 1000;
     private long tiempoUltimoClick;
     private long delay = TIEMPO_ENTRE_CLICKS;

@@ -9,20 +9,19 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
-import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+
 import com.cunoraz.gifview.library.GifView;
+import com.pagatodo.qposlib.BuildConfig;
 import com.pagatodo.qposlib.PosInstance;
 import com.pagatodo.qposlib.R;
 import com.pagatodo.qposlib.abstracts.AbstractDongle;
@@ -52,7 +51,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
 
     protected static final int RC_HANDLE_INTERNET_PERM = 1;
     protected static final int RC_HANDLE_BLUETHOOTH_PERM = 2;
-    private CountDownTimer connect_Time = new CountDownTimer(TIMER_LONG, TIMER_END) {
+    private final CountDownTimer connect_Time = new CountDownTimer(TIMER_LONG, TIMER_END) {
         @Override
         public void onTick(long millisUntilFinished) {
             if (isConnected) {
@@ -174,7 +173,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
                 //Pintado Mensaje
                 txtStatus.setText(R.string.Conectando_Dispositivo);
                 ///
-                final AbstractDongle qpos = new DSpreadDevicePosFactory().getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this);
+                final AbstractDongle qpos = new DSpreadDevicePosFactory().getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this, BuildConfig.DEBUG);
                 PosInstance.getInstance().setDongle(qpos);
                 imgLector.setGifResource(COLOR_TEMA.equals("AZUL") ? R.raw.totem_connecting_blue : R.raw.totem_connecting_red );
                 broadcastManager.realizarConexion(qpos);
@@ -209,7 +208,7 @@ public class ConexionPosActivity extends Activity implements BroadcastListener, 
                     usbManager.requestPermission(device, permissionIntent);
                 } else if (device.getVendorId() == QPOS_VENDOR_ID) {
 
-                    final AbstractDongle qpos = dSpreadDevicePosFactory.getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this);
+                    final AbstractDongle qpos = dSpreadDevicePosFactory.getDongleDevice(device, PosInterface.Tipodongle.DSPREAD, this, BuildConfig.DEBUG);
                     broadcastManager.realizarConexion(qpos);
                     break;
                 }

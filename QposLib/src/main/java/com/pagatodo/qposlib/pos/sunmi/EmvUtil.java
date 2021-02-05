@@ -1,21 +1,15 @@
 package com.pagatodo.qposlib.pos.sunmi;
 
 import com.pagatodo.qposlib.PosInstance;
-import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.sunmi.pay.hardware.aidlv2.AidlConstantsV2;
 import com.sunmi.pay.hardware.aidlv2.bean.AidV2;
 import com.sunmi.pay.hardware.aidlv2.bean.CapkV2;
 import com.sunmi.pay.hardware.aidlv2.bean.EmvTermParamV2;
 import com.sunmi.pay.hardware.aidlv2.emv.EMVOptV2;
 import com.sunmi.pay.hardware.aidlv2.security.SecurityOptV2;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.pagatodo.qposlib.QPosManager.ADITIONAL_CAPS;
-import static com.pagatodo.qposlib.QPosManager.COUNTRY_CODE;
-import static com.pagatodo.qposlib.QPosManager.CURRENCY_CODE;
-import static com.pagatodo.qposlib.QPosManager.CVM_LIMIT;
-import static com.pagatodo.qposlib.QPosManager.TERMINAL_CAPS;
 
 public final class EmvUtil {
 
@@ -31,11 +25,11 @@ public final class EmvUtil {
      */
     public static Map<String, String> getConfig(Map<String, String> capabilities) {
         Map<String, String> map = new HashMap<>();
-        map.put("countryCode", capabilities.get(COUNTRY_CODE));//country code(国家代码)
-        map.put("capability", capabilities.get(TERMINAL_CAPS));//capability(终端性能)
-        map.put("5F2A", capabilities.get(CURRENCY_CODE));//transaction currency code(交易货币代码)
-        map.put("DF21", capabilities.get(CVM_LIMIT));//transaction currency code exponent(交易货币代码指数)
-        map.put("9F40", capabilities.get(ADITIONAL_CAPS));
+//        map.put("countryCode", capabilities.get(COUNTRY_CODE));//country code(国家代码)
+//        map.put("capability", capabilities.get(TERMINAL_CAPS));//capability(终端性能)
+//        map.put("5F2A", capabilities.get(CURRENCY_CODE));//transaction currency code(交易货币代码)
+//        map.put("DF21", capabilities.get(CVM_LIMIT));//transaction currency code exponent(交易货币代码指数)
+//        map.put("9F40", capabilities.get(ADITIONAL_CAPS));
         return map;
     }
 

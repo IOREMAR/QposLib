@@ -1,23 +1,17 @@
 package com.pagatodo.qposlib.abstracts;
 
 import com.pagatodo.qposlib.QPosManager;
-import com.pagatodo.qposlib.SunmiPosManager;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
-
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
+import com.pagatodo.qposlib.dongleconnect.FirmwareUpdateListener;
 import com.pagatodo.qposlib.dongleconnect.PosInterface;
 
-
-import static com.pagatodo.qposlib.dongleconnect.PosInterface.Tipodongle.DSPREAD;
-
-
 public abstract class AbstractDongle implements PosInterface {
-
+    protected FirmwareUpdateListener firmwareUpdate;
     protected DongleListener dongleListener;
     protected DongleConnect dongleConnect;
 
     protected QPosManager qposDspread;
-    protected SunmiPosManager posSunmi;
 
     public AbstractDongle() {
     }
@@ -30,17 +24,18 @@ public abstract class AbstractDongle implements PosInterface {
         this.dongleListener = dongleListener;
     }
 
-
-    public void setDongleConnect (final DongleConnect connect){
+    public void setDongleConnect(final DongleConnect connect) {
         dongleConnect = connect;
+    }
+
+    public void setFirmwareUpdate(final FirmwareUpdateListener firmwareUpdate) {
+        this.firmwareUpdate = firmwareUpdate;
     }
 
     public AbstractDongle getQpos(final PosInterface.Tipodongle tipodongle) {
         switch (tipodongle) {
             case DSPREAD:
                 return qposDspread;
-            case SUNMI:
-                return posSunmi;
             default:
                 return null;
         }
@@ -49,9 +44,4 @@ public abstract class AbstractDongle implements PosInterface {
     public void setQposDspread(final QPosManager qposDspread) {
         this.qposDspread = qposDspread;
     }
-
-    public void setPosSunmi(final SunmiPosManager posSunmi) {
-        this.posSunmi = posSunmi;
-    }
-
 }

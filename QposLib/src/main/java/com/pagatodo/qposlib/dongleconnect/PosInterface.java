@@ -2,9 +2,14 @@ package com.pagatodo.qposlib.dongleconnect;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+import androidx.core.util.Consumer;
+
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
+import com.pagatodo.qposlib.pos.QposParameters;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -18,11 +23,17 @@ public interface PosInterface {
 
     String getPosInfo();
 
-    void getPin(final String maskedPAN);
+    void getPin(int maxLen, final String maskedPAN);
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
 
-    void doTransaccion(TransactionAmountData transactionAmountData);
+    void setEmvAidUpdate(ArrayList<String> aidConfigList);
+
+    void setAidTlvUpdate(@NonNull String[] aidTlvList);
+
+    void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
+
+    void doTransaccionNextOperation(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
     void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
@@ -30,7 +41,7 @@ public interface PosInterface {
 
     void cancelOperacion();
 
-    void operacionFinalizada(final String ARPC);
+    void operacionFinalizada(final String arpc);
 
     Map<String, String> getIccTags();
 
@@ -40,20 +51,18 @@ public interface PosInterface {
 
     Hashtable<String, String> getQposIdHash();
 
-    int updateFirmware(final byte[] dataToUpdate, final String file);
+    void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex, Consumer<Boolean> onReturnCustomConfigConsumer);
 
-    int getUpdateProgress();
+    int updateFirmware(@NonNull Context context, final byte[] dataToUpdate, final String file);
 
     QPOSDeviceInfo getDevicePosInfo();
 
     /**
      * Tipo de Dispositivo
      */
-    public enum Tipodongle {
+    enum Tipodongle {
         DSPREAD,
         NODSPREAD,
         SUNMI
     }
-
-//    void doMifareCard(MifareCommand mifareCommand, int timeout);
 }

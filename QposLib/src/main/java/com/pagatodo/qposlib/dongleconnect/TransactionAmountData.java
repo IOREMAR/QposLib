@@ -2,6 +2,8 @@ package com.pagatodo.qposlib.dongleconnect;
 
 import android.util.ArrayMap;
 
+import androidx.annotation.NonNull;
+
 import com.dspread.xpos.QPOSService;
 
 import java.util.Map;
@@ -41,7 +43,7 @@ public class TransactionAmountData {
         this.capacidades = capacidades;
     }
 
-    private Map<String,String> capacidades =  new ArrayMap<>();
+    private Map<String, String> capacidades = new ArrayMap<>();
 
     public String getTipoOperacion() {
         return tipoOperacion;
@@ -82,10 +84,11 @@ public class TransactionAmountData {
     }
 
     public QPOSService.TransactionType getTransactionType() {
-        if ("CASHBACK".equals(transactionType)) {
+        if (transactionType.equalsIgnoreCase("CASHBACK")) {
             return QPOSService.TransactionType.CASHBACK;
-        }
-        if (this.transactionType.equals("INQUIRY")) {
+        } else if (transactionType.equalsIgnoreCase("REFUND")) {
+            return QPOSService.TransactionType.REFUND;
+        } else if (transactionType.equalsIgnoreCase("INQUIRY")) {
             return QPOSService.TransactionType.INQUIRY;
         } else {
             return QPOSService.TransactionType.GOODS;
@@ -167,5 +170,26 @@ public class TransactionAmountData {
 
     public void setCodigoPostal(final String codigoPostal) {
         this.codigoPostal = codigoPostal;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "{\"nameProduct\" : " + (nameProduct == null ? null : "\"" + nameProduct + "\"")
+                + ",\"pathIcon\" : " + (pathIcon == null ? null : "\"" + pathIcon + "\"")
+                + ",\"amount\" : " + (amount == null ? null : "\"" + amount + "\"")
+                + ",\"cashbackAmount\" : " + (cashbackAmount == null ? null : "\"" + cashbackAmount + "\"")
+                + ",\"currencyCode\" : " + (currencyCode == null ? null : "\"" + currencyCode + "\"")
+                + ",\"transactionType\" : " + (transactionType == null ? null : "\"" + transactionType + "\"")
+                + ",\"tipoOperacion\" : " + (tipoOperacion == null ? null : "\"" + tipoOperacion + "\"")
+                + ",\"decimales\" : " + decimales
+                + ",\"importeOperacion\" : " + (importeOperacion == null ? null : "\"" + importeOperacion + "\"")
+                + ",\"importeCashback\" : " + (importeCashback == null ? null : "\"" + importeCashback + "\"")
+                + ",\"importePropina\" : " + (importePropina == null ? null : "\"" + importePropina + "\"")
+                + ",\"importeImpuestos\" : " + (importeImpuestos == null ? null : "\"" + importeImpuestos + "\"")
+                + ",\"comision\" : " + (comision == null ? null : "\"" + comision + "\"")
+                + ",\"codigoPostal\" : " + (codigoPostal == null ? null : "\"" + codigoPostal + "\"")
+                + ",\"AmountIcon\" : " + (AmountIcon == null ? null : "\"" + AmountIcon + "\"")
+                + "}";
     }
 }

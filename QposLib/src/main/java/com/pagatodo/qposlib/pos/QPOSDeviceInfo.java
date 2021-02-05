@@ -1,5 +1,7 @@
 package com.pagatodo.qposlib.pos;
 
+import androidx.annotation.NonNull;
+
 public class QPOSDeviceInfo {
 
     private String isSupportedTrack2;
@@ -113,5 +115,23 @@ public class QPOSDeviceInfo {
 
     public void setIsUsbConnected(final String isUsbConnected) {
         this.isUsbConnected = isUsbConnected;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "{\"isSupportedTrack2\" : " + (isSupportedTrack2 == null ? null : "\"" + isSupportedTrack2 + "\"")
+                + ",\"isKeyboard\" : " + (isKeyboard == null ? null : "\"" + isKeyboard + "\"")
+                + ",\"batteryPercentage\" : " + (batteryPercentage == null ? null : "\"" + batteryPercentage + "\"")
+                + ",\"updateWorkKeyFlag\" : " + (updateWorkKeyFlag == null ? null : "\"" + updateWorkKeyFlag + "\"")
+                + ",\"bootloaderVersion\" : " + (bootloaderVersion == null ? null : "\"" + bootloaderVersion + "\"")
+                + ",\"isSupportedTrack3\" : " + (isSupportedTrack3 == null ? null : "\"" + isSupportedTrack3 + "\"")
+                + ",\"batteryLevel\" : " + (batteryLevel == null ? null : "\"" + batteryLevel + "\"")
+                + ",\"hardwareVersion\" : " + (hardwareVersion == null ? null : "\"" + hardwareVersion + "\"")
+                + ",\"isCharging\" : " + (isCharging == null ? null : "\"" + isCharging + "\"")
+                + ",\"firmwareVersion\" : " + (firmwareVersion == null ? null : "\"" + firmwareVersion + "\"")
+                + ",\"isSupportedTrack1\" : " + (isSupportedTrack1 == null ? null : "\"" + isSupportedTrack1 + "\"")
+                + ",\"isUsbConnected\" : " + (isUsbConnected == null ? null : "\"" + isUsbConnected + "\"")
+                + "}";
     }
 }

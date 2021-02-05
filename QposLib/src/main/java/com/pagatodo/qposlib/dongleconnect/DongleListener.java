@@ -1,19 +1,27 @@
 package com.pagatodo.qposlib.dongleconnect;
 
+import androidx.core.util.Consumer;
 
 import com.pagatodo.qposlib.pos.PosResult;
-
 
 import java.util.Hashtable;
 import java.util.List;
 
 public interface DongleListener {
 
+    boolean checkDoTrade();
+
     void onResultData(final Hashtable<String, String> datosOperacion, DongleListener.DoTradeResult entryMode);
 
     void onRespuestaDongle(final PosResult result);
 
-    void seleccionEmvApp(final List<String> listEMVApps, AplicacionEmv aplicacionEmv);
+    void seleccionEmvApp(final List<String> listEMVApps, final Consumer<Integer> indexConsumer);
+
+    void onEmvAidConfigUpdateResult(boolean wasSuccessful);
+
+    void onAidUpdateFinished();
+
+    void onPinResult(final Hashtable<String, String> result);
 
     void onSearchMifareCardResult(final Hashtable<String, String> hashtable);//NOSONAR
 
@@ -27,9 +35,11 @@ public interface DongleListener {
 
     void onErrorWriteMifareCard();
 
-    void  onFinishMifareCardResult(boolean finish);
+    void onFinishMifareCardResult(boolean finish);
 
-      enum DoTradeResult {
+    void onSyncRequested(final String data);
+
+    enum DoTradeResult {
         NONE,
         MCR,
         ICC,
@@ -39,9 +49,10 @@ public interface DongleListener {
         NO_UPDATE_WORK_KEY,
         NFC_ONLINE,
         NFC_OFFLINE,
-        NFC_DECLINED;
+        NFC_DECLINED,
+        SEE_PHONE;
 
-         DoTradeResult() {
+        DoTradeResult() {
         }
     }
 }

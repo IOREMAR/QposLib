@@ -33,6 +33,7 @@ public class PosResult {
         INVALID_ICC_DATA,
         FALLBACK,
         NFC_TERMINATED,
+        NFC_DECLINED,
         CARD_REMOVED,
         TRADE_LOG_FULL,
         TIMEOUT,
@@ -54,9 +55,11 @@ public class PosResult {
         EMV_CAPK_CFG_ERROR,
         APDU_ERROR,
         ICC_ONLINE_TIMEOUT,
-        AMOUNT_OUT_OF_LIMIT;
+        AMOUNT_OUT_OF_LIMIT,
+        TRY_ANOTHER_INTERFACE,
+        SEE_PHONE;
 
-        private PosTransactionResult() {
+        PosTransactionResult() {
         }
     }
 
@@ -70,5 +73,14 @@ public class PosResult {
 
     public boolean isCorrect() {
         return correct;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "response=" + responce +
+                ", correct=" + correct +
+                ", message='" + message + '\'' +
+                '}';
     }
 }
