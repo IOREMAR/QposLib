@@ -1273,6 +1273,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             amount = amount.concat("00");
         }
 
+//        final BigDecimal bigDecimal = new BigDecimal(monto);
+//        final String amount = bigDecimal
+//                .setScale(0, RoundingMode.HALF_UP)
+//                .toPlainString();
+
         logFlow("setDecimalesAmount() returned: " + amount);
         return amount;
     }
@@ -1305,7 +1310,12 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.TERMINAL_VERIFICATION_RESULTS,
                 EmvTags.TRANSACTION_STATUS_INDICATOR,
                 EmvTags.ISSUER_COUNTRY_CODE,
-                EmvTags.TERMINAL_CAPABILITIES
+                EmvTags.TERMINAL_CAPABILITIES,
+                EmvTags.MERCHANT_NAME_AND_LOCATION,
+                EmvTags.AMOUNT_AUTHORIZED,
+                EmvTags.TRANSACTION_CURRENCY_CODE,
+                EmvTags.TRANSACTION_CURRENCY_EXPONENT,
+                EmvTags.TERMINAL_TRANSACTION_QUALIFIERS
         );
 
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT,
