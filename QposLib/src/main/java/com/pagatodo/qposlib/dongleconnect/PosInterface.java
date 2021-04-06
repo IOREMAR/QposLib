@@ -27,9 +27,9 @@ public interface PosInterface {
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
 
-    void setEmvAidUpdate(ArrayList<String> aidConfigList);
+    void setEmvAidUpdate(ArrayList<String> aidConfigList, Consumer<Boolean> onEmvAidConfigUpdateConsumer);
 
-    void setAidTlvUpdate(@NonNull String[] aidTlvList);
+    void setAidTlvUpdate(@NonNull String[] aidTlvList, Consumer<Boolean> onAidTlvUpdateConsumer);
 
     void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 

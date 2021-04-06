@@ -57,6 +57,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public static final String REQUIERE_PIN = "INGRESE PIN";
 
     private Consumer<Boolean> onReturnCustomConfigConsumer;
+    private Consumer<Boolean> onAidConfigOverrideConsumer;
     private UpdateThread updateThread;
 
     private QPOSService mPosService;
@@ -283,15 +284,18 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void setEmvAidUpdate(ArrayList<String> aidConfigList) {
+    public void setEmvAidUpdate(ArrayList<String> aidConfigList, Consumer<Boolean> onEmvAidConfigUpdateConsumer) {
         logFlow("setEmvAppUpdate() called with: aidConfigList = [" + aidConfigList + "]");
+        this.onAidConfigOverrideConsumer = onEmvAidConfigUpdateConsumer;
         mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, aidConfigList);
     }
 
     @Override
-    public void setAidTlvUpdate(@NonNull String[] aidTlvList) {
+    public void setAidTlvUpdate(@NonNull String[] aidTlvList, Consumer<Boolean> onAidTlvUpdateConsumer) {
         logFlow("setAidTlvUpdate() called with: aidTlvList = [" + Arrays.toString(aidTlvList) + "]");
+        this.onAidConfigOverrideConsumer = onAidTlvUpdateConsumer;
         this.aidTlvList = aidTlvList;
+
         isUpdatingAid = true;
         aidListCount = 0;
         updateEmvAid();
@@ -305,7 +309,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             aidListCount++;
         } else {
             isUpdatingAid = false;
-            dongleListener.onAidUpdateFinished();
+            onAidConfigOverrideConsumer.accept(true);
         }
     }
 
@@ -588,7 +592,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             mEmvTags = reciverEMVTags(DongleListener.DoTradeResult.NFC_ONLINE);
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.NFC_ONLINE);
         } else if (doTradeResult == QPOSService.DoTradeResult.ICC) {
-            mPosService.doEmvApp(QPOSService.EmvOption.START);
+            mPosService.doEmvApp(dongleListener.isPinMandatory()
+                    ? QPOSService.EmvOption.START_WITH_FORCE_PIN
+                    : QPOSService.EmvOption.START);
         } else if (doTradeResult == QPOSService.DoTradeResult.MCR) {
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.MCR);
         } else if (doTradeResult == QPOSService.DoTradeResult.NFC_DECLINED) {
@@ -973,7 +979,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (isUpdatingAid) {
             updateEmvAid();
         } else {
-            dongleListener.onEmvAidConfigUpdateResult(isSuccess);
+            onAidConfigOverrideConsumer.accept(isSuccess);
         }
     }
 
@@ -1303,6 +1309,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.CARD_APPLICATION_VERSION,
                 EmvTags.CARDHOLDER_VERIFICATION_METHOD_LIST,
                 EmvTags.CARDHOLDER_VERIFICATION_RESULTS,
+                EmvTags.CARDHOLDER_MOBILE_VERIFICATION_RESULTS,
                 EmvTags.ISSUER_APPLICATION_DATA,
                 EmvTags.ISSUER_ACTION_CODE_DEFAULT,
                 EmvTags.ISSUER_ACTION_CODE_DENIAL,
@@ -1313,6 +1320,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.TERMINAL_CAPABILITIES,
                 EmvTags.MERCHANT_NAME_AND_LOCATION,
                 EmvTags.AMOUNT_AUTHORIZED,
+                EmvTags.AMOUNT_OTHER,
                 EmvTags.TRANSACTION_CURRENCY_CODE,
                 EmvTags.TRANSACTION_CURRENCY_EXPONENT,
                 EmvTags.TERMINAL_TRANSACTION_QUALIFIERS
