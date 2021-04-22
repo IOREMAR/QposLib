@@ -31,6 +31,8 @@ import com.pagatodo.qposlib.pos.dspread.POSBluetoothDevice;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
@@ -68,6 +70,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private Hashtable<String, String> mDecodeData;
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
+    private QposParameters qposParameters;
     private String[] aidTlvList;
 
     private int aidListCount;
@@ -196,6 +199,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             onRequestQposDisconnected();
         } else {
             this.transactionAmountData = transactionAmountData;
+            this.qposParameters = qposParameters;
 
             mPosService.setQuickEmv(transactionAmountData.getTipoOperacion().equalsIgnoreCase("X")
                     || transactionAmountData.getTipoOperacion().equalsIgnoreCase("Z"));
@@ -204,6 +208,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             mPosService.setOnlineTime(1000);
             mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
             mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
+            mPosService.setAmountPoint(qposParameters.getExponent() > 0);
 
             if (dongleListener.checkDoTrade()) {
                 mPosService.doTrade(10, 30);
@@ -412,10 +417,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     public void doMifareCardOnPosService(String doMifareCardParas, int timeout) {
         mPosService.doMifareCard(doMifareCardParas, timeout);
-    }
-
-    public void setPosServiceAmount(String decimalesAmount, String cashbackAmount, TransactionAmountData transaction, boolean isPosDisplayAmount) {
-        mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
     }
 
     //Montón de métodos heredados de la librería del QPOS
@@ -1273,16 +1274,21 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     private String setDecimalesAmount(final String monto) {
-        String amount = monto;
+//        String amount = monto;
         //TODO Seleccionar el monto del pais - difiere del que existen el la BD ?
-        if (transactionAmountData.getDecimales() == 0 && !"".equals(monto)) {
-            amount = amount.concat("00");
-        }
+//        if (transactionAmountData.getDecimales() == 0 && !"".equals(monto)) {
+//            amount = amount.concat("00");
+//        }
 
-//        final BigDecimal bigDecimal = new BigDecimal(monto);
-//        final String amount = bigDecimal
-//                .setScale(0, RoundingMode.HALF_UP)
-//                .toPlainString();
+        final String amount;
+        if (monto.isEmpty()) {
+            amount = monto;
+        } else {
+            final BigDecimal nPow = BigDecimal.valueOf(Math.pow(10, qposParameters.getExponent()));
+            amount = new BigDecimal(monto).multiply(nPow)
+                    .setScale(0, RoundingMode.HALF_UP)
+                    .toPlainString();
+        }
 
         logFlow("setDecimalesAmount() returned: " + amount);
         return amount;
