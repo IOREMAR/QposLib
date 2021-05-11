@@ -1356,7 +1356,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     private void logFlow(String entireToLog) {
         if (isLogEnabled) {
-            int MAX_BUFFER_LENGTH = 3072;
+            int MAX_BUFFER_LENGTH = 3200;
 
             if (entireToLog.length() > MAX_BUFFER_LENGTH) {
                 int endIndex, beginIndex = 0;
