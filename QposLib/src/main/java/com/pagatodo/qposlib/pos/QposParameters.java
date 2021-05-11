@@ -1,12 +1,21 @@
 package com.pagatodo.qposlib.pos;
 
+import androidx.annotation.Nullable;
+
 import com.dspread.xpos.QPOSService;
+
+import java.math.BigDecimal;
 
 public final class QposParameters {
     public static final int MODE_ICC = 422;
     public static final int MODE_NFC = 632;
     public static final int MODE_MS = 67;
+
     private int exponent = 0;
+    @Nullable
+    private BigDecimal amount;
+    @Nullable
+    private BigDecimal cashback;
     private QPOSService.CardTradeMode cardTradeMode;
 
     public void setTradeMode(int tradeMode) {
@@ -38,10 +47,30 @@ public final class QposParameters {
         this.exponent = exponent;
     }
 
+    @Nullable
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    @Nullable
+    public BigDecimal getCashback() {
+        return cashback;
+    }
+
+    public void setCashback(BigDecimal cashback) {
+        this.cashback = cashback;
+    }
+
     @Override
     public String toString() {
         return "{" +
                 "exponent=" + exponent +
+                ", amount=" + amount +
+                ", cashback=" + cashback +
                 ", cardTradeMode=" + cardTradeMode +
                 '}';
     }

@@ -49,6 +49,8 @@ public interface PosInterface {
 
     void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex, Consumer<Boolean> onReturnCustomConfigConsumer);
 
+    void setReaderEmvConfig(String emvXml, Consumer<Boolean> onReturnCustomConfigConsumer);
+
     int updateFirmware(@NonNull Context context, final byte[] dataToUpdate, final String file);
 
     QPOSDeviceInfo getDevicePosInfo();

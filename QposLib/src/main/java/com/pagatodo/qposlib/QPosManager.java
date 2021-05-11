@@ -10,6 +10,7 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 import androidx.core.util.Pair;
 
@@ -105,6 +106,14 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void setReaderEmvConfig(@NonNull String emvXml, Consumer<Boolean> onReturnCustomConfigConsumer) {
+        logFlow("setReaderEmvConfig() called with: emvXml = " + emvXml);
+        this.onReturnCustomConfigConsumer = onReturnCustomConfigConsumer;
+        mPosService.updateEMVConfigByXml(emvXml);
+    }
+
+
+    @Override
     public void openCommunication() {
         logFlow("openCommunication() called");
 
@@ -192,7 +201,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters) {
+    public void doTransaccion(TransactionAmountData transactionAmountData, @NonNull QposParameters qposParameters) {
         logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "], qposParameters = [" + qposParameters + "]");
 
         if (!mPosService.isQposPresent()) {
@@ -449,7 +458,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onQposPinMapSyncResult(boolean isSuccess, boolean isNeedPin) {
         logFlow("onQposPinMapSyncResult() called with: isSuccess = [" + isSuccess + "], isNeedPin = [" + isNeedPin + "]");
-
     }
 
     @Override
@@ -679,13 +687,15 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onRequestSetAmount() {
-        String amount = transactionAmountData.getAmount();
-        String cashback = transactionAmountData.getCashbackAmount();
         String currencyCode = transactionAmountData.getCurrencyCode();
         QPOSService.TransactionType transactionType = transactionAmountData.getTransactionType();
 
-        logFlow("onRequestSetAmount(): amount = [" + amount + "], cashback = [" + cashback + "], currencyCode = [" + currencyCode + "], transactionType = [" + transactionType + "]");
-        mPosService.setAmount(setDecimalesAmount(amount), setDecimalesAmount(cashback), currencyCode, transactionType, true);
+        logFlow("onRequestSetAmount(): currencyCode = [" + currencyCode + "], transactionType = [" + transactionType + "]");
+        mPosService.setAmount(setDecimalesAmount(qposParameters.getAmount()),
+                setDecimalesAmount(qposParameters.getCashback()),
+                currencyCode,
+                transactionType,
+                true);
     }
 
     @Override
@@ -1273,7 +1283,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onRequestNFCBatchData() called with: transactionResult = [" + transactionResult + "], tlv = [" + tlv + "]");
     }
 
-    private String setDecimalesAmount(final String monto) {
+    private String setDecimalesAmount(@Nullable final BigDecimal monto) {
 //        String amount = monto;
         //TODO Seleccionar el monto del pais - difiere del que existen el la BD ?
 //        if (transactionAmountData.getDecimales() == 0 && !"".equals(monto)) {
@@ -1281,16 +1291,16 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 //        }
 
         final String amount;
-        if (monto.isEmpty()) {
-            amount = monto;
+        if (monto == null) {
+            amount = "";
         } else {
             final BigDecimal nPow = BigDecimal.valueOf(Math.pow(10, qposParameters.getExponent()));
-            amount = new BigDecimal(monto).multiply(nPow)
+            amount = monto.multiply(nPow)
                     .setScale(0, RoundingMode.HALF_UP)
                     .toPlainString();
         }
 
-        logFlow("setDecimalesAmount() returned: " + amount);
+        logFlow("setDecimalesAmount() returned: amount = [" + monto + "] => [" + amount + ']');
         return amount;
     }
 
@@ -1344,9 +1354,26 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return tags;
     }
 
-    private void logFlow(String whatToLog) {
+    private void logFlow(String entireToLog) {
         if (isLogEnabled) {
-            Log.d(TAG, whatToLog);
+            int MAX_BUFFER_LENGTH = 3072;
+
+            if (entireToLog.length() > MAX_BUFFER_LENGTH) {
+                int endIndex, beginIndex = 0;
+
+                do {
+                    endIndex = beginIndex + MAX_BUFFER_LENGTH;
+
+                    String what = endIndex > entireToLog.length()
+                            ? entireToLog.substring(beginIndex)
+                            : entireToLog.substring(beginIndex, endIndex);
+
+                    Log.d(TAG, what);
+                    beginIndex = endIndex;
+                } while (entireToLog.length() > beginIndex);
+            } else {
+                Log.d(TAG, entireToLog);
+            }
         }
     }
 
