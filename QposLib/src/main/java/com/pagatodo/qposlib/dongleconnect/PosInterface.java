@@ -17,6 +17,8 @@ public interface PosInterface {
 
     void openCommunication();
 
+    void reopenCommunication();
+
     void closeCommunication();
 
     void resetQPOS();
@@ -47,6 +49,7 @@ public interface PosInterface {
 
     Hashtable<String, String> getQposIdHash();
 
+    @Deprecated
     void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex, Consumer<Boolean> onReturnCustomConfigConsumer);
 
     void setReaderEmvConfig(String emvXml, Consumer<Boolean> onReturnCustomConfigConsumer);
