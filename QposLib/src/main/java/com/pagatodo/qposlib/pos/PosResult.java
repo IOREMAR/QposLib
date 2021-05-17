@@ -57,6 +57,7 @@ public class PosResult {
         ICC_ONLINE_TIMEOUT,
         AMOUNT_OUT_OF_LIMIT,
         TRY_ANOTHER_INTERFACE,
+        AID_BLOCKED,
         SEE_PHONE;
 
         PosTransactionResult() {

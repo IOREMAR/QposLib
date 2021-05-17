@@ -5,5 +5,5 @@ import com.pagatodo.qposlib.QPosManager;
 public interface FirmwareUpdateListener {
     void onPosFirmwareUpdateProgress(int percentage);
 
-    void onPosFirmwareUpdateResult(QPosManager.FirmwareStatus firmwareStatus);
+    void onPosFirmwareUpdateResult(QPosManager.FirmwareStatus firmwareStatus, boolean requiresReconnect);
 }

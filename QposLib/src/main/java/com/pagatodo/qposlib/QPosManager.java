@@ -339,7 +339,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("updateFirmware: " + result);
 
         if (result != 0) {
-            firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.POS_NOT_CHARGING);
+            firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.POS_NOT_CHARGING, false);
         } else {
             isUpdatingFirmware = true;
 
@@ -788,6 +788,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             case SELECT_APP_FAIL:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CARD_BLOCKED_OR_NO_EMV_APPS, "Error al Leer la Tarjeta", false));
                 break;
+            case APP_BLOCKED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.AID_BLOCKED, "Tarjeta Bloqueada", false));
+                break;
             default:
                 break;
         }
@@ -849,9 +852,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 @Override
                 public void run() {
                     isUpdatingFirmware = false;
-                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_FAILED);
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_FAILED, true);
                 }
-            }, 400);
+            }, 500);
         } else if (mDecodeData != null) {
             switch (error) {
                 case TIMEOUT:
@@ -1089,14 +1092,14 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 isUpdatingFirmware = false;
 
                 if (result == QPOSService.UpdateInformationResult.UPDATE_SUCCESS) {
-                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_COMPLETED);
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_COMPLETED, true);
                 } else if (result == QPOSService.UpdateInformationResult.UPDATE_FAIL) {
-                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_UNCOMPLETED);
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_UNCOMPLETED, true);
                 } else {
-                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_FAILED);
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_FAILED, true);
                 }
             }
-        }, 400);
+        }, 500);
     }
 
     @Override
