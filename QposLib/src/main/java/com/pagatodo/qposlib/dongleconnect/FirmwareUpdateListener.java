@@ -1,9 +1,9 @@
 package com.pagatodo.qposlib.dongleconnect;
 
-import com.pagatodo.qposlib.QPosManager;
+import com.pagatodo.qposlib.enums.FirmwareStatus;
 
 public interface FirmwareUpdateListener {
     void onPosFirmwareUpdateProgress(int percentage);
 
-    void onPosFirmwareUpdateResult(QPosManager.FirmwareStatus firmwareStatus, boolean requiresReconnect);
+    void onPosFirmwareUpdateResult(FirmwareStatus firmwareStatus, boolean requiresReconnect);
 }

@@ -21,6 +21,8 @@ import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
 import com.pagatodo.qposlib.emv.EmvTags;
+import com.pagatodo.qposlib.enums.FirmwareStatus;
+import com.pagatodo.qposlib.enums.UserInterfaceMessage;
 import com.pagatodo.qposlib.pos.ICCDecodeData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
 import com.pagatodo.qposlib.pos.PosResult;
@@ -149,7 +151,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void reopenCommunication() {
-        mPosService.connectBluetoothDevice(true, 25, ((POSBluetoothDevice) mDevice).getAddress());
+        mPosService.connectBluetoothDevice(10, ((POSBluetoothDevice) mDevice).getAddress());
         skipFetchId = true;
     }
 
@@ -182,12 +184,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void resetQPOS() {
         logFlow("resetQPOS() called");
         mPosService.resetQPOS();
-    }
-
-    @Override
-    public String getPosInfo() {
-        logFlow("getPosInfo() returned: " + null);
-        return null;
     }
 
     @Override
@@ -470,6 +466,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestWaitingUser() {
         logFlow("onRequestWaitingUser() called");
+        dongleListener.onShowMessage(UserInterfaceMessage.PRESENT_CARD, true);
     }
 
     @Override
@@ -813,6 +810,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
         if (skipFetchId) {
             skipFetchId = false;
+            dongleConnect.onDeviceConnected();
         } else {
             mPosService.getQposId();
         }
@@ -822,7 +820,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onRequestQposDisconnected() {
         logFlow("onRequestQposDisconnected() called: isUpdatingFirmware = [" + isUpdatingFirmware + ']');
 
-        // TODO: This method is also called just before updating the firmware
         if (!isUpdatingFirmware) {
             dongleConnect.ondevicedisconnected();
         }
@@ -891,6 +888,21 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestDisplay(final QPOSService.Display displayMsg) {
         logFlow("onRequestDisplay() called with: displayMsg = [" + displayMsg + "]");
+
+        if (displayMsg == QPOSService.Display.PLEASE_WAIT) {
+            dongleListener.onShowMessage(UserInterfaceMessage.READING_CARD, false);
+        } else if (displayMsg == QPOSService.Display.PROCESSING) {
+            dongleListener.onShowMessage(UserInterfaceMessage.PROCESSING, false);
+        } else if (displayMsg == QPOSService.Display.INPUT_PIN_ING
+                || displayMsg == QPOSService.Display.INPUT_OFFLINE_PIN_ONLY) {
+            dongleListener.onShowMessage(UserInterfaceMessage.ENTER_PIN, true);
+        } else if (displayMsg == QPOSService.Display.INPUT_LAST_OFFLINE_PIN) {
+            dongleListener.onShowMessage(UserInterfaceMessage.LAST_PIN, true);
+        } else if (displayMsg == QPOSService.Display.REMOVE_CARD) {
+            dongleListener.onShowMessage(UserInterfaceMessage.REMOVE_CARD, false);
+        } else if (displayMsg == QPOSService.Display.TRANSACTION_TERMINATED) {
+            dongleListener.onShowMessage(UserInterfaceMessage.TRX_ABORTED, false);
+        }
     }
 
     @Override
@@ -1095,6 +1107,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_COMPLETED, true);
                 } else if (result == QPOSService.UpdateInformationResult.UPDATE_FAIL) {
                     firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_UNCOMPLETED, true);
+                } else if (result == QPOSService.UpdateInformationResult.UPDATE_PACKET_VEFIRY_ERROR) {
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.FILE_INCOMPATIBLE, true);
                 } else {
                     firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_FAILED, true);
                 }
@@ -1409,7 +1423,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     private class UpdateThread extends Thread {
         private boolean continueFlag = true;
-        private Handler handler;
+        private final Handler handler;
 
         private UpdateThread(@NonNull Context context) {
             handler = new Handler(context.getMainLooper()) {
@@ -1444,16 +1458,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     }
                 }
             } while (continueFlag);
-            handler = null;
         }
-    }
-
-    public enum FirmwareStatus {
-        UPDATE_COMPLETED,
-        UPDATE_UNCOMPLETED,
-        UPDATE_FAILED,
-        POS_NOT_CHARGING,
-        FILE_INCOMPATIBLE,
-        FILE_READ_ERROR
     }
 }

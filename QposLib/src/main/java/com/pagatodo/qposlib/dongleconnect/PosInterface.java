@@ -23,8 +23,6 @@ public interface PosInterface {
 
     void resetQPOS();
 
-    String getPosInfo();
-
     void getPin(int maxLen, final String maskedPAN);
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
