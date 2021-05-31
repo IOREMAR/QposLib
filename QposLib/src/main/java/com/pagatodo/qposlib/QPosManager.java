@@ -1383,7 +1383,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.AMOUNT_OTHER,
                 EmvTags.TRANSACTION_CURRENCY_CODE,
                 EmvTags.TRANSACTION_CURRENCY_EXPONENT,
-                EmvTags.TERMINAL_TRANSACTION_QUALIFIERS
+                EmvTags.TERMINAL_TRANSACTION_QUALIFIERS,
+                EmvTags.KERNEL_4_READER_CAPABILITIES,
+                EmvTags.DEVICE_INFORMATION,
+                EmvTags.POS_ENTRY_MODE
         );
 
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT,
