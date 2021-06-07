@@ -29,6 +29,7 @@ import com.pagatodo.qposlib.pos.PosResult;
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
 import com.pagatodo.qposlib.pos.QposParameters;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
+import com.pagatodo.qposlib.pos.dspread.HexUtils;
 import com.pagatodo.qposlib.pos.dspread.POSBluetoothDevice;
 
 import java.io.BufferedReader;
@@ -372,6 +373,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return mQPosDeviceInfo;
     }
 
+    @Override
+    public void showOnDisplay(@NonNull String message) {
+        logFlow("showOnDisplay() called with: message = [" + message + "]");
+        String hexBytes = HexUtils.byteArray2Hex(message.getBytes());
+        mPosService.lcdShowCustomDisplayNew(QPOSService.LcdModeAlign.LCD_MODE_ALIGNCENTER, hexBytes, 3);
+    }
+
     public void generateSessionKeys() {
         mPosService.generateSessionKeys();
     }
@@ -698,8 +706,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.setAmount(setDecimalesAmount(qposParameters.getAmount()),
                 setDecimalesAmount(qposParameters.getCashback()),
                 currencyCode,
-                transactionType,
-                true);
+                transactionType);
     }
 
     @Override
@@ -783,6 +790,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_TERMINATED, "Error al Procesar la Tarjeta", false));
                 break;
             case SELECT_APP_FAIL:
+//                showOnDisplay("ERROR DE LECTURA\nRETIRE TARJETA");
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CARD_BLOCKED_OR_NO_EMV_APPS, "Error al Leer la Tarjeta", false));
                 break;
             case APP_BLOCKED:
@@ -952,6 +960,21 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onReturnPowerOnFelicaResult(String re, Hashtable<String, String> powerOnFelicaResult) {
+        logFlow("onReturnPowerOnFelicaResult() called with: re = [" + re + "], powerOnFelicaResult = [" + powerOnFelicaResult + "]");
+    }
+
+    @Override
+    public void onReturnPowerOffFelicaResult(String re) {
+        logFlow("onReturnPowerOffFelicaResult() called with: re = [" + re + "]");
+    }
+
+    @Override
+    public void onReturnSendApduFelicaResult(final String re, final String responseLen, final String responseData) {
+        logFlow("onReturnSendApduFelicaResult() called with: re = [" + re + "], responseLen = [" + responseLen + "], responseData = [" + responseData + "]");
+    }
+
+    @Override
     public void onReturnSetSleepTimeResult(final boolean isSuccess) {
         logFlow("onReturnSetSleepTimeResult() called with: isSuccess = [" + isSuccess + "]");
     }
@@ -986,6 +1009,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onReturnCustomConfigResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
         onReturnCustomConfigConsumer.accept(isSuccess);
         onReturnCustomConfigConsumer = null;
+    }
+
+    @Override
+    public void onReturnDoInputCustomStr(final boolean isSuccess, final String result, final String initiator) {
+        logFlow("onReturnDoInputCustomStr() called with: isSuccess = [" + isSuccess + "], result = [" + result + "], initiator = [" + initiator + "]");
     }
 
     @Override
@@ -1167,6 +1195,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onReturnMPUCardInfo(Hashtable<String, String> hashtable) {
+        logFlow("onReturnMPUCardInfo() called with: hashtable = [" + hashtable + "]");
+    }
+
+    @Override
     public void onReturnPowerOnNFCResult(final boolean result, final String ksn, final String atr, final int atrLen) {
         logFlow("onReturnPowerOnNFCResult() called with: result = [" + result + "], ksn = [" + ksn + "], atr = [" + atr + "], atrLen = [" + atrLen + "]");
     }
@@ -1187,8 +1220,18 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onReadGasCardResult(boolean b, String result) {
+        logFlow("onReadGasCardResult() called with: b = [" + b + "], result = [" + result + "]");
+    }
+
+    @Override
     public void onWriteBusinessCardResult(boolean b) {
         logFlow("onWriteBusinessCardResult() called with: b = [" + b + "]");
+    }
+
+    @Override
+    public void onWriteGasCardResult(boolean b) {
+        logFlow("onWriteGasCardResult() called with: b = [" + b + "]");
     }
 
     @Override
@@ -1217,8 +1260,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onEncryptData(final String b) {
-        logFlow("onEncryptData() called with: b = [" + b + "]");
+    public void onEncryptData(Hashtable<String, String> resultTable) {
+        logFlow("onEncryptData() called with: resultTable = [" + resultTable + "]");
     }
 
     @Override
@@ -1277,8 +1320,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onSetPosBlePinCode(boolean b) {
-        logFlow("onSetPosBlePinCode() called with: b = [" + b + "]");
+    public void onSetPosBluConfig(boolean b) {
+        logFlow("onSetPosBluConfig() called with: b = [" + b + "]");
     }
 
     @Override
@@ -1325,6 +1368,21 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestNFCBatchData(QPOSService.TransactionResult transactionResult, String tlv) {
         logFlow("onRequestNFCBatchData() called with: transactionResult = [" + transactionResult + "], tlv = [" + tlv + "]");
+    }
+
+    @Override
+    public void onReturnupdateKeyByTR_31Result(boolean result) {
+        logFlow("onReturnupdateKeyByTR_31Result() called with: result = [" + result + "]");
+    }
+
+    @Override
+    public void onRequestGenerateTransportKey(Hashtable result) {
+        logFlow("onRequestGenerateTransportKey() called with: result = [" + result + "]");
+    }
+
+    @Override
+    public void onReturnAnalyseDigEnvelop(String result) {
+        logFlow("onReturnAnalyseDigEnvelop() called with: result = [" + result + "]");
     }
 
     private String setDecimalesAmount(@Nullable final BigDecimal monto) {

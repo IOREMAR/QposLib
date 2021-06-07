@@ -56,6 +56,8 @@ public interface PosInterface {
 
     QPOSDeviceInfo getDevicePosInfo();
 
+    void showOnDisplay(@NonNull String message);
+
     /**
      * Tipo de Dispositivo
      */

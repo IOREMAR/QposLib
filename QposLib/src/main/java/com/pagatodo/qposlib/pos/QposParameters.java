@@ -13,9 +13,9 @@ public final class QposParameters {
 
     private int exponent = 0;
     @Nullable
-    private BigDecimal amount;
+    private BigDecimal amount = BigDecimal.ZERO;
     @Nullable
-    private BigDecimal cashback;
+    private BigDecimal cashback = BigDecimal.ZERO;
     private QPOSService.CardTradeMode cardTradeMode;
 
     public void setTradeMode(int tradeMode) {
