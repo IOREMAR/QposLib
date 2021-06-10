@@ -31,6 +31,8 @@ public interface PosInterface {
 
     void setAidTlvUpdate(@NonNull String[] aidTlvList, Consumer<Boolean> onAidTlvUpdateConsumer);
 
+    void updateDRL(Consumer<Boolean> onAidTlvUpdateConsumer);
+
     void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
     void doTransaccionNextOperation(TransactionAmountData transactionAmountData, QposParameters qposParameters);
@@ -56,7 +58,7 @@ public interface PosInterface {
 
     QPOSDeviceInfo getDevicePosInfo();
 
-    void showOnDisplay(@NonNull String message);
+    void showOnDisplay(@NonNull String message, int seconds);
 
     /**
      * Tipo de Dispositivo

@@ -20,6 +20,7 @@ import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
+import com.pagatodo.qposlib.emv.DRLTag;
 import com.pagatodo.qposlib.emv.EmvTags;
 import com.pagatodo.qposlib.enums.FirmwareStatus;
 import com.pagatodo.qposlib.enums.UserInterfaceMessage;
@@ -60,6 +61,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private final String TAG = QPosManager.class.getSimpleName();
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
+    public static final int MAX_DISPLAY_EMS = 16;
     public static final String REQUIERE_PIN = "INGRESE PIN";
 
     private Consumer<Boolean> onReturnCustomConfigConsumer;
@@ -374,10 +376,183 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void showOnDisplay(@NonNull String message) {
-        logFlow("showOnDisplay() called with: message = [" + message + "]");
+    public void showOnDisplay(@NonNull String message, int seconds) {
+        logFlow("showOnDisplay() called with: message = [" + message + "], seconds = [" + seconds + "]");
         String hexBytes = HexUtils.byteArray2Hex(message.getBytes());
-        mPosService.lcdShowCustomDisplayNew(QPOSService.LcdModeAlign.LCD_MODE_ALIGNCENTER, hexBytes, 3);
+        mPosService.lcdShowCustomDisplayNew(QPOSService.LcdModeAlign.LCD_MODE_ALIGNCENTER, hexBytes, seconds);
+    }
+
+    @Override
+    public void updateDRL(Consumer<Boolean> onAidTlvUpdateConsumer) {
+        final StringBuilder tlvDRL = new StringBuilder();
+        final StringBuilder DRL1 = new StringBuilder();
+
+        String aidData = "9F06" + "08" + "F1F1F1F1F1F1F1F1"; //AID
+
+        String NineF8218, NineF8221, NineF8248, NineF8220, NineF8223, NineF92810D, NineF8226, NineF92810E, NineF8224, NineF92810F;
+        //FIRST group
+        NineF8218 = "803102682620"; //VISA TID
+        NineF8221 = "00"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "02"; //Amount Zero Check Options
+        NineF8223 = "00"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000005001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        DRL1.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL1.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL1.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL1.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL1.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL1.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL1.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL1.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL1.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL1.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+
+        String DRL1len = HexUtils.intToHexStr(DRL1.length() / 2);
+        //Tip.e("DRL1len=="+DRL1len);
+        DRL1.insert(0, "7F16" + DRL1len);
+        //Tip.e("DRL1==="+DRL1);
+
+        //SECOND group
+        NineF8218 = "803102682612000003"; //VISA TID
+        NineF8221 = "00"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "02"; //Amount Zero Check Options
+        NineF8223 = "00"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000005001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        StringBuilder DRL2 = new StringBuilder();
+        DRL2.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL2.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL2.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL2.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL2.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL2.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL2.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL2.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL2.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL2.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+
+        String DRL2len = HexUtils.intToHexStr(DRL2.length() / 2);
+        //Tip.e("DRL2len=="+DRL2len);
+        DRL2.insert(0, "7F16" + DRL2len);
+        // Tip.e("DRL2==="+DRL2);
+
+        //THIRD group
+        NineF8218 = "803102682612"; //VISA TID
+        NineF8221 = "00"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "02"; //Amount Zero Check Options
+        NineF8223 = "00"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000005001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        StringBuilder DRL3 = new StringBuilder();
+        DRL3.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL3.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL3.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL3.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL3.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL3.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL3.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL3.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL3.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL3.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+        String DRL3len = HexUtils.intToHexStr(DRL3.length() / 2);
+        //Tip.e("DRL3len=="+DRL3len);
+        DRL3.insert(0, "7F16" + DRL3len);
+        //Tip.e("DRL3==="+DRL3);
+
+        //FOURTH group
+        NineF8218 = "803102682600"; //VISA TID
+        NineF8221 = "00"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "02"; //Amount Zero Check Options
+        NineF8223 = "00"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000005001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        StringBuilder DRL4 = new StringBuilder();
+        DRL4.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL4.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL4.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL4.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL4.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL4.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL4.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL4.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL4.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL4.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+        String DRL4len = HexUtils.intToHexStr(DRL4.length() / 2);
+        //Tip.e("DRL4len=="+DRL4len);
+        DRL4.insert(0, "7F16" + DRL4len);
+        //Tip.e("DRL4==="+DRL4);
+
+        //FIFTH group
+        NineF8218 = "80FF"; //VISA TID
+        NineF8221 = "01"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "01"; //Amount Zero Check Options
+        NineF8223 = "01"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000002001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        StringBuilder DRL5 = new StringBuilder();
+        DRL5.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL5.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL5.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL5.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL5.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL5.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL5.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL5.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL5.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL5.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+        String DRL5len = HexUtils.intToHexStr(DRL5.length() / 2);
+        //Tip.e("DRL5len=="+DRL5len);
+        DRL5.insert(0, "7F16" + DRL5len);
+        //Tip.e("DRL5==="+DRL5);
+
+
+        tlvDRL.append(DRL1);
+        tlvDRL.append(DRL2);
+        tlvDRL.append(DRL3);
+        tlvDRL.append(DRL4);
+        tlvDRL.append(DRL5);
+        String tlvDRLlen = HexUtils.intToHexStr(tlvDRL.length() / 2);
+        if (tlvDRLlen.length() % 2 == 1) {
+            tlvDRLlen = "0" + tlvDRLlen;
+        }
+        //Tip.e("tlvlen=="+tlvDRLlen);
+        if (tlvDRL.length() / 2 > 256) {
+            //Tip.e("finallen=="+tlvDRL.length()/2);
+            tlvDRL.insert(0, aidData + "7F15" + "82" + tlvDRLlen);
+        } else {
+            tlvDRL.insert(0, aidData + "7F15" + tlvDRLlen);
+        }
+        //Tip.e("tlvDRL=="+tlvDRL);
+
+        logFlow("updateDRL: " + tlvDRL);
+        this.onAidConfigOverrideConsumer = onAidTlvUpdateConsumer;
+        mPosService.updateEmvAPPByTlv(QPOSService.EMVDataOperation.update, tlvDRL.toString());
     }
 
     public void generateSessionKeys() {
@@ -398,10 +573,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
 
         return false;
-    }
-
-    public void doEmvAppOnPosService() {
-        mPosService.doEmvApp(QPOSService.EmvOption.START);
     }
 
     public void onFailTradeResult(QPOSService.DoTradeResult tradeResult) {
@@ -774,11 +945,18 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onRequestTransactionResult() called with: transactionResult = [" + transactionResult + "]");
 
         switch (transactionResult) {
-            case APPROVED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
-                break;
             case CANCEL:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
+                break;
+            case SELECT_APP_FAIL:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CARD_BLOCKED_OR_NO_EMV_APPS, "Error al Leer la Tarjeta", false));
+                break;
+            case NFC_TERMINATED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_TERMINATED, "Error al Procesar la Tarjeta", false));
+                break;
+            case CARD_BLOCKED:
+            case APP_BLOCKED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.AID_BLOCKED, "Tarjeta Bloqueada", false));
                 break;
             case DECLINED:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.DECLINADO, "Tarjeta Declinada", false));
@@ -786,15 +964,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             case TERMINATED:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TERMINADO, "Operación Finalizada", false));
                 break;
-            case NFC_TERMINATED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_TERMINATED, "Error al Procesar la Tarjeta", false));
-                break;
-            case SELECT_APP_FAIL:
-//                showOnDisplay("ERROR DE LECTURA\nRETIRE TARJETA");
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CARD_BLOCKED_OR_NO_EMV_APPS, "Error al Leer la Tarjeta", false));
-                break;
-            case APP_BLOCKED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.AID_BLOCKED, "Tarjeta Bloqueada", false));
+            case APPROVED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
                 break;
             default:
                 break;
@@ -1418,6 +1589,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.APPLICATION_IDENTIFIER,
                 EmvTags.APPLICATION_DEDICATED_FILE_NAME,
                 EmvTags.APPLICATION_PREFERRED_NAME,
+                EmvTags.APPLICATION_LABEL,
                 EmvTags.APPLICATION_PRIORITY_INDICATOR,
                 EmvTags.TRACK2_EQUIVALENT_DATA,
                 EmvTags.APPLICATION_INTERCHANGE_PROFILE,

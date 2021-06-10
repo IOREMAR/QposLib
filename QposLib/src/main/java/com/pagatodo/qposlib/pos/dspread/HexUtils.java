@@ -15,4 +15,42 @@ public class HexUtils {
             return hex.toString();
         }
     }
+
+    /*
+     * Convert hex value to ascii code
+     **/
+    public static String convertHexToString(String hex) {
+        StringBuilder sb = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
+
+        //49204c6f7665204a617661 split into two characters 49, 20, 4c...
+        for (int i = 0; i < hex.length() - 1; i += 2) {
+            //grab the hex in pairs
+            String output = hex.substring(i, (i + 2));
+            //convert hex to decimal
+            int decimal = Integer.parseInt(output, 16);
+            //convert the decimal to character
+            sb.append((char) decimal);
+
+            temp.append(decimal);
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * int 转换为hex的string
+     *
+     * @param i
+     * @return
+     */
+    public static String intToHexStr(int i) {
+        String string = null;
+        if (i >= 0 && i < 10) {
+            string = "0" + i;
+        } else {
+            string = Integer.toHexString(i);
+        }
+        return string;
+    }
 }
