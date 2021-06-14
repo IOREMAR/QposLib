@@ -221,9 +221,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
             mPosService.setFormatId("0025");
             mPosService.setOnlineTime(1000);
-            mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
+
+            mPosService.setPosDisplayAmountFlag(transactionAmountData.getTransactionType() != QPOSService.TransactionType.INQUIRY);
             mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
             mPosService.setAmountPoint(qposParameters.getExponent() > 0);
+            mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
 
             if (dongleListener.checkDoTrade()) {
                 mPosService.doTrade(10, 30);
@@ -383,7 +385,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void updateDRL(Consumer<Boolean> onAidTlvUpdateConsumer) {
+    public void updateDefaultDRL(Consumer<Boolean> onAidTlvUpdateConsumer) {
         final StringBuilder tlvDRL = new StringBuilder();
         final StringBuilder DRL1 = new StringBuilder();
 
@@ -550,7 +552,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
         //Tip.e("tlvDRL=="+tlvDRL);
 
-        logFlow("updateDRL: " + tlvDRL);
+        logFlow("updateDefaultDRL: " + tlvDRL);
         this.onAidConfigOverrideConsumer = onAidTlvUpdateConsumer;
         mPosService.updateEmvAPPByTlv(QPOSService.EMVDataOperation.update, tlvDRL.toString());
     }

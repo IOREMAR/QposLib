@@ -31,7 +31,7 @@ public interface PosInterface {
 
     void setAidTlvUpdate(@NonNull String[] aidTlvList, Consumer<Boolean> onAidTlvUpdateConsumer);
 
-    void updateDRL(Consumer<Boolean> onAidTlvUpdateConsumer);
+    void updateDefaultDRL(Consumer<Boolean> onAidTlvUpdateConsumer);
 
     void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
