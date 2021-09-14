@@ -2,6 +2,7 @@ package com.pagatodo.qposlib.dongleconnect;
 
 import androidx.core.util.Consumer;
 
+import com.pagatodo.qposlib.enums.UserInterfaceMessage;
 import com.pagatodo.qposlib.pos.PosResult;
 
 import java.util.Hashtable;
@@ -17,11 +18,9 @@ public interface DongleListener {
 
     void seleccionEmvApp(final List<String> listEMVApps, final Consumer<Integer> indexConsumer);
 
-    void onEmvAidConfigUpdateResult(boolean wasSuccessful);
-
-    void onAidUpdateFinished();
-
     void onPinResult(final Hashtable<String, String> result);
+
+    void onShowMessage(final UserInterfaceMessage userInterfaceMessage, boolean userActionRequired);
 
     void onSearchMifareCardResult(final Hashtable<String, String> hashtable);//NOSONAR
 
@@ -38,6 +37,8 @@ public interface DongleListener {
     void onFinishMifareCardResult(boolean finish);
 
     void onSyncRequested(final String data);
+
+    boolean isPinMandatory();
 
     enum DoTradeResult {
         NONE,

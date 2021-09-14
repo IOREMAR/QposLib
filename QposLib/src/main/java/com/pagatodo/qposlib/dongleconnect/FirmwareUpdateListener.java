@@ -1,9 +1,9 @@
 package com.pagatodo.qposlib.dongleconnect;
 
-import androidx.annotation.Nullable;
+import com.pagatodo.qposlib.enums.FirmwareStatus;
 
 public interface FirmwareUpdateListener {
     void onPosFirmwareUpdateProgress(int percentage);
 
-    void onPosFirmwareUpdateResult(boolean wasSuccessful, @Nullable String error);
+    void onPosFirmwareUpdateResult(FirmwareStatus firmwareStatus, boolean requiresReconnect);
 }

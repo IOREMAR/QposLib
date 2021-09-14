@@ -10,6 +10,7 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 import androidx.core.util.Pair;
 
@@ -19,18 +20,24 @@ import com.pagatodo.qposlib.abstracts.AbstractDongle;
 import com.pagatodo.qposlib.dongleconnect.DongleConnect;
 import com.pagatodo.qposlib.dongleconnect.DongleListener;
 import com.pagatodo.qposlib.dongleconnect.TransactionAmountData;
+import com.pagatodo.qposlib.emv.DRLTag;
 import com.pagatodo.qposlib.emv.EmvTags;
+import com.pagatodo.qposlib.enums.FirmwareStatus;
+import com.pagatodo.qposlib.enums.UserInterfaceMessage;
 import com.pagatodo.qposlib.pos.ICCDecodeData;
 import com.pagatodo.qposlib.pos.POSConnectionState;
 import com.pagatodo.qposlib.pos.PosResult;
 import com.pagatodo.qposlib.pos.QPOSDeviceInfo;
 import com.pagatodo.qposlib.pos.QposParameters;
 import com.pagatodo.qposlib.pos.dspread.DspreadDevicePOS;
+import com.pagatodo.qposlib.pos.dspread.HexUtils;
 import com.pagatodo.qposlib.pos.dspread.POSBluetoothDevice;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
@@ -54,9 +61,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private final String TAG = QPosManager.class.getSimpleName();
     private final POSConnectionState mQStatePOS = new POSConnectionState();
     private final DspreadDevicePOS<Parcelable> mDevicePos;
+    public static final int MAX_DISPLAY_EMS = 16;
     public static final String REQUIERE_PIN = "INGRESE PIN";
 
     private Consumer<Boolean> onReturnCustomConfigConsumer;
+    private Consumer<Boolean> onAidConfigOverrideConsumer;
     private UpdateThread updateThread;
 
     private QPOSService mPosService;
@@ -67,8 +76,10 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     private Hashtable<String, String> mDecodeData;
     private Map<String, String> mEmvTags = new ArrayMap<>();
     private Hashtable<String, String> mQposIdHash;
+    private QposParameters qposParameters;
     private String[] aidTlvList;
 
+    private boolean skipFetchId;
     private int aidListCount;
     private boolean isUpdatingAid;
     private boolean isUpdatingFirmware;
@@ -99,6 +110,14 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         this.onReturnCustomConfigConsumer = onReturnCustomConfigConsumer;
         mPosService.updateEmvConfig(emvCfgAppHex, emvCfgCapkHex);
     }
+
+    @Override
+    public void setReaderEmvConfig(@NonNull String emvXml, Consumer<Boolean> onReturnCustomConfigConsumer) {
+        logFlow("setReaderEmvConfig() called with: emvXml = " + emvXml);
+        this.onReturnCustomConfigConsumer = onReturnCustomConfigConsumer;
+        mPosService.updateEMVConfigByXml(emvXml);
+    }
+
 
     @Override
     public void openCommunication() {
@@ -133,6 +152,12 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.setPosExistFlag(true);
     }
 
+    @Override
+    public void reopenCommunication() {
+        mPosService.connectBluetoothDevice(10, ((POSBluetoothDevice) mDevice).getAddress());
+        skipFetchId = true;
+    }
+
     public void closeCommunication() {
         logFlow("closeCommunication() called: isUpdatingFirmware = [" + isUpdatingFirmware + ']');
 
@@ -165,12 +190,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public String getPosInfo() {
-        logFlow("getPosInfo() returned: " + null);
-        return null;
-    }
-
-    @Override
     public void getPin(int maxLen, final String maskedPAN) {
         logFlow("getPin() called with: maxLen = [" + maxLen + "], maskedPAN = [" + maskedPAN + "]");
         mPosService.getPin(1, 10, maxLen, REQUIERE_PIN, maskedPAN, getDateforTRX(), 15);
@@ -188,21 +207,25 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters) {
+    public void doTransaccion(TransactionAmountData transactionAmountData, @NonNull QposParameters qposParameters) {
         logFlow("doTransaccion() called with: transactionAmountData = [" + transactionAmountData + "], qposParameters = [" + qposParameters + "]");
 
         if (!mPosService.isQposPresent()) {
             onRequestQposDisconnected();
         } else {
             this.transactionAmountData = transactionAmountData;
+            this.qposParameters = qposParameters;
 
             mPosService.setQuickEmv(transactionAmountData.getTipoOperacion().equalsIgnoreCase("X")
                     || transactionAmountData.getTipoOperacion().equalsIgnoreCase("Z"));
 
             mPosService.setFormatId("0025");
             mPosService.setOnlineTime(1000);
-            mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
+
+            mPosService.setPosDisplayAmountFlag(transactionAmountData.getTransactionType() != QPOSService.TransactionType.INQUIRY);
             mPosService.setAmountIcon(transactionAmountData.getAmountIcon());
+            mPosService.setAmountPoint(qposParameters.getExponent() > 0);
+            mPosService.setCardTradeMode(qposParameters.getCardTradeMode());
 
             if (dongleListener.checkDoTrade()) {
                 mPosService.doTrade(10, 30);
@@ -283,15 +306,18 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void setEmvAidUpdate(ArrayList<String> aidConfigList) {
+    public void setEmvAidUpdate(ArrayList<String> aidConfigList, Consumer<Boolean> onEmvAidConfigUpdateConsumer) {
         logFlow("setEmvAppUpdate() called with: aidConfigList = [" + aidConfigList + "]");
+        this.onAidConfigOverrideConsumer = onEmvAidConfigUpdateConsumer;
         mPosService.updateEmvAPP(QPOSService.EMVDataOperation.update, aidConfigList);
     }
 
     @Override
-    public void setAidTlvUpdate(@NonNull String[] aidTlvList) {
+    public void setAidTlvUpdate(@NonNull String[] aidTlvList, Consumer<Boolean> onAidTlvUpdateConsumer) {
         logFlow("setAidTlvUpdate() called with: aidTlvList = [" + Arrays.toString(aidTlvList) + "]");
+        this.onAidConfigOverrideConsumer = onAidTlvUpdateConsumer;
         this.aidTlvList = aidTlvList;
+
         isUpdatingAid = true;
         aidListCount = 0;
         updateEmvAid();
@@ -305,7 +331,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             aidListCount++;
         } else {
             isUpdatingAid = false;
-            dongleListener.onAidUpdateFinished();
+            onAidConfigOverrideConsumer.accept(true);
         }
     }
 
@@ -314,12 +340,12 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("updateFirmware: " + result);
 
         if (result != 0) {
-            firmwareUpdate.onPosFirmwareUpdateResult(false, "Device is not charging");
+            firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.POS_NOT_CHARGING, false);
         } else {
+            isUpdatingFirmware = true;
+
             updateThread = new UpdateThread(context);
-            updateThread.setContinueFlag(true);
             updateThread.start();
-//            isUpdatingFirmware = true;
         }
 
         return result;
@@ -351,6 +377,186 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return mQPosDeviceInfo;
     }
 
+    @Override
+    public void showOnDisplay(@NonNull String message, int seconds) {
+        logFlow("showOnDisplay() called with: message = [" + message + "], seconds = [" + seconds + "]");
+        String hexBytes = HexUtils.byteArray2Hex(message.getBytes());
+        mPosService.lcdShowCustomDisplayNew(QPOSService.LcdModeAlign.LCD_MODE_ALIGNCENTER, hexBytes, seconds);
+    }
+
+    @Override
+    public void updateDefaultDRL(Consumer<Boolean> onAidTlvUpdateConsumer) {
+        final StringBuilder tlvDRL = new StringBuilder();
+        final StringBuilder DRL1 = new StringBuilder();
+
+        String aidData = "9F06" + "08" + "F1F1F1F1F1F1F1F1"; //AID
+
+        String NineF8218, NineF8221, NineF8248, NineF8220, NineF8223, NineF92810D, NineF8226, NineF92810E, NineF8224, NineF92810F;
+        //FIRST group
+        NineF8218 = "803102682620"; //VISA TID
+        NineF8221 = "00"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "02"; //Amount Zero Check Options
+        NineF8223 = "00"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000005001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        DRL1.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL1.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL1.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL1.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL1.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL1.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL1.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL1.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL1.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL1.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+
+        String DRL1len = HexUtils.intToHexStr(DRL1.length() / 2);
+        //Tip.e("DRL1len=="+DRL1len);
+        DRL1.insert(0, "7F16" + DRL1len);
+        //Tip.e("DRL1==="+DRL1);
+
+        //SECOND group
+        NineF8218 = "803102682612000003"; //VISA TID
+        NineF8221 = "00"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "02"; //Amount Zero Check Options
+        NineF8223 = "00"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000005001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        StringBuilder DRL2 = new StringBuilder();
+        DRL2.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL2.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL2.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL2.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL2.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL2.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL2.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL2.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL2.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL2.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+
+        String DRL2len = HexUtils.intToHexStr(DRL2.length() / 2);
+        //Tip.e("DRL2len=="+DRL2len);
+        DRL2.insert(0, "7F16" + DRL2len);
+        // Tip.e("DRL2==="+DRL2);
+
+        //THIRD group
+        NineF8218 = "803102682612"; //VISA TID
+        NineF8221 = "00"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "02"; //Amount Zero Check Options
+        NineF8223 = "00"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000005001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        StringBuilder DRL3 = new StringBuilder();
+        DRL3.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL3.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL3.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL3.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL3.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL3.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL3.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL3.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL3.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL3.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+        String DRL3len = HexUtils.intToHexStr(DRL3.length() / 2);
+        //Tip.e("DRL3len=="+DRL3len);
+        DRL3.insert(0, "7F16" + DRL3len);
+        //Tip.e("DRL3==="+DRL3);
+
+        //FOURTH group
+        NineF8218 = "803102682600"; //VISA TID
+        NineF8221 = "00"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "02"; //Amount Zero Check Options
+        NineF8223 = "00"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000005001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        StringBuilder DRL4 = new StringBuilder();
+        DRL4.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL4.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL4.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL4.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL4.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL4.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL4.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL4.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL4.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL4.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+        String DRL4len = HexUtils.intToHexStr(DRL4.length() / 2);
+        //Tip.e("DRL4len=="+DRL4len);
+        DRL4.insert(0, "7F16" + DRL4len);
+        //Tip.e("DRL4==="+DRL4);
+
+        //FIFTH group
+        NineF8218 = "80FF"; //VISA TID
+        NineF8221 = "01"; //Status check
+        NineF8248 = "01"; //Zero Check
+        NineF8220 = "01"; //Amount Zero Check Options
+        NineF8223 = "01"; //Contactless Transaction Limit Check
+        NineF92810D = "000000120000"; //Contactless Transaction Limit
+        NineF8226 = "01"; //Contactless CVM Limit Check
+        NineF92810E = "000000002001"; //Contactless CVM Required Limit
+        NineF8224 = "01"; //Contactless Floor Limit Check
+        NineF92810F = "000000000000"; //Contactless Floor Limit
+
+        StringBuilder DRL5 = new StringBuilder();
+        DRL5.append(DRLTag.NineF8218).append(HexUtils.intToHexStr(NineF8218.length() / 2)).append(NineF8218);
+        DRL5.append(DRLTag.NineF8221).append(HexUtils.intToHexStr(NineF8221.length() / 2)).append(NineF8221);
+        DRL5.append(DRLTag.NineF8248).append(HexUtils.intToHexStr(NineF8248.length() / 2)).append(NineF8248);
+        DRL5.append(DRLTag.NineF8220).append(HexUtils.intToHexStr(NineF8220.length() / 2)).append(NineF8220);
+        DRL5.append(DRLTag.NineF8223).append(HexUtils.intToHexStr(NineF8223.length() / 2)).append(NineF8223);
+        DRL5.append(DRLTag.NineF92810D).append(HexUtils.intToHexStr(NineF92810D.length() / 2)).append(NineF92810D);
+        DRL5.append(DRLTag.NineF8226).append(HexUtils.intToHexStr(NineF8226.length() / 2)).append(NineF8226);
+        DRL5.append(DRLTag.NineF92810E).append(HexUtils.intToHexStr(NineF92810E.length() / 2)).append(NineF92810E);
+        DRL5.append(DRLTag.NineF8224).append(HexUtils.intToHexStr(NineF8224.length() / 2)).append(NineF8224);
+        DRL5.append(DRLTag.NineF92810F).append(HexUtils.intToHexStr(NineF92810F.length() / 2)).append(NineF92810F);
+        String DRL5len = HexUtils.intToHexStr(DRL5.length() / 2);
+        //Tip.e("DRL5len=="+DRL5len);
+        DRL5.insert(0, "7F16" + DRL5len);
+        //Tip.e("DRL5==="+DRL5);
+
+
+        tlvDRL.append(DRL1);
+        tlvDRL.append(DRL2);
+        tlvDRL.append(DRL3);
+        tlvDRL.append(DRL4);
+        tlvDRL.append(DRL5);
+        String tlvDRLlen = HexUtils.intToHexStr(tlvDRL.length() / 2);
+        if (tlvDRLlen.length() % 2 == 1) {
+            tlvDRLlen = "0" + tlvDRLlen;
+        }
+        //Tip.e("tlvlen=="+tlvDRLlen);
+        if (tlvDRL.length() / 2 > 256) {
+            //Tip.e("finallen=="+tlvDRL.length()/2);
+            tlvDRL.insert(0, aidData + "7F15" + "82" + tlvDRLlen);
+        } else {
+            tlvDRL.insert(0, aidData + "7F15" + tlvDRLlen);
+        }
+        //Tip.e("tlvDRL=="+tlvDRL);
+
+        logFlow("updateDefaultDRL: " + tlvDRL);
+        this.onAidConfigOverrideConsumer = onAidTlvUpdateConsumer;
+        mPosService.updateEmvAPPByTlv(QPOSService.EMVDataOperation.update, tlvDRL.toString());
+    }
+
     public void generateSessionKeys() {
         mPosService.generateSessionKeys();
     }
@@ -369,10 +575,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         }
 
         return false;
-    }
-
-    public void doEmvAppOnPosService() {
-        mPosService.doEmvApp(QPOSService.EmvOption.START);
     }
 
     public void onFailTradeResult(QPOSService.DoTradeResult tradeResult) {
@@ -410,10 +612,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         mPosService.doMifareCard(doMifareCardParas, timeout);
     }
 
-    public void setPosServiceAmount(String decimalesAmount, String cashbackAmount, TransactionAmountData transaction, boolean isPosDisplayAmount) {
-        mPosService.setAmount(setDecimalesAmount(transactionAmountData.getAmount()), setDecimalesAmount(transactionAmountData.getCashbackAmount()), transactionAmountData.getCurrencyCode(), transactionAmountData.getTransactionType(), true);
-    }
-
     //Montón de métodos heredados de la librería del QPOS
 
     @Override
@@ -444,12 +642,12 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onQposPinMapSyncResult(boolean isSuccess, boolean isNeedPin) {
         logFlow("onQposPinMapSyncResult() called with: isSuccess = [" + isSuccess + "], isNeedPin = [" + isNeedPin + "]");
-
     }
 
     @Override
     public void onRequestWaitingUser() {
         logFlow("onRequestWaitingUser() called");
+        dongleListener.onShowMessage(UserInterfaceMessage.PRESENT_CARD, true);
     }
 
     @Override
@@ -588,7 +786,9 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             mEmvTags = reciverEMVTags(DongleListener.DoTradeResult.NFC_ONLINE);
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.NFC_ONLINE);
         } else if (doTradeResult == QPOSService.DoTradeResult.ICC) {
-            mPosService.doEmvApp(QPOSService.EmvOption.START);
+            mPosService.doEmvApp(dongleListener.isPinMandatory()
+                    ? QPOSService.EmvOption.START_WITH_FORCE_PIN
+                    : QPOSService.EmvOption.START);
         } else if (doTradeResult == QPOSService.DoTradeResult.MCR) {
             dongleListener.onResultData(decodeData, DongleListener.DoTradeResult.MCR);
         } else if (doTradeResult == QPOSService.DoTradeResult.NFC_DECLINED) {
@@ -672,13 +872,14 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
 
     @Override
     public void onRequestSetAmount() {
-        String amount = transactionAmountData.getAmount();
-        String cashback = transactionAmountData.getCashbackAmount();
         String currencyCode = transactionAmountData.getCurrencyCode();
         QPOSService.TransactionType transactionType = transactionAmountData.getTransactionType();
 
-        logFlow("onRequestSetAmount(): amount = [" + amount + "], cashback = [" + cashback + "], currencyCode = [" + currencyCode + "], transactionType = [" + transactionType + "]");
-        mPosService.setAmount(setDecimalesAmount(amount), setDecimalesAmount(cashback), currencyCode, transactionType, true);
+        logFlow("onRequestSetAmount(): currencyCode = [" + currencyCode + "], transactionType = [" + transactionType + "]");
+        mPosService.setAmount(setDecimalesAmount(qposParameters.getAmount()),
+                setDecimalesAmount(qposParameters.getCashback()),
+                currencyCode,
+                transactionType);
     }
 
     @Override
@@ -746,11 +947,18 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onRequestTransactionResult() called with: transactionResult = [" + transactionResult + "]");
 
         switch (transactionResult) {
-            case APPROVED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
-                break;
             case CANCEL:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CANCELADO, "Operación Cancelada", false));
+                break;
+            case SELECT_APP_FAIL:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CARD_BLOCKED_OR_NO_EMV_APPS, "Error al Leer la Tarjeta", false));
+                break;
+            case NFC_TERMINATED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_TERMINATED, "Error al Procesar la Tarjeta", false));
+                break;
+            case CARD_BLOCKED:
+            case APP_BLOCKED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.AID_BLOCKED, "Tarjeta Bloqueada", false));
                 break;
             case DECLINED:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.DECLINADO, "Tarjeta Declinada", false));
@@ -758,11 +966,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
             case TERMINATED:
                 dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.TERMINADO, "Operación Finalizada", false));
                 break;
-            case NFC_TERMINATED:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.NFC_TERMINATED, "Error al Procesar la Tarjeta", false));
-                break;
-            case SELECT_APP_FAIL:
-                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.CARD_BLOCKED_OR_NO_EMV_APPS, "Error al Leer la Tarjeta", false));
+            case APPROVED:
+                dongleListener.onRespuestaDongle(new PosResult(PosResult.PosTransactionResult.APROBADO, "Operación Finalizada", true));
                 break;
             default:
                 break;
@@ -783,14 +988,19 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     public void onRequestQposConnected() {
         logFlow("onRequestQposConnected() called");
         mQStatePOS.updateState(POSConnectionState.STATE_POS.CONNECTED);
-        mPosService.getQposId();
+
+        if (skipFetchId) {
+            skipFetchId = false;
+            dongleConnect.onDeviceConnected();
+        } else {
+            mPosService.getQposId();
+        }
     }
 
     @Override
     public void onRequestQposDisconnected() {
         logFlow("onRequestQposDisconnected() called: isUpdatingFirmware = [" + isUpdatingFirmware + ']');
 
-        // TODO: This method is also called just before updating the firmware
         if (!isUpdatingFirmware) {
             dongleConnect.ondevicedisconnected();
         }
@@ -814,8 +1024,15 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         this.cancelOperacion();
 
         if (isUpdatingFirmware) {
-            updateThread.setContinueFlag(false);
-            firmwareUpdate.onPosFirmwareUpdateResult(false, error.name());
+            updateThread.continueFlag = false;
+
+            updateThread.handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    isUpdatingFirmware = false;
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_FAILED, true);
+                }
+            }, 500);
         } else if (mDecodeData != null) {
             switch (error) {
                 case TIMEOUT:
@@ -852,6 +1069,21 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     @Override
     public void onRequestDisplay(final QPOSService.Display displayMsg) {
         logFlow("onRequestDisplay() called with: displayMsg = [" + displayMsg + "]");
+
+        if (displayMsg == QPOSService.Display.PLEASE_WAIT) {
+            dongleListener.onShowMessage(UserInterfaceMessage.READING_CARD, false);
+        } else if (displayMsg == QPOSService.Display.PROCESSING) {
+            dongleListener.onShowMessage(UserInterfaceMessage.PROCESSING, false);
+        } else if (displayMsg == QPOSService.Display.INPUT_PIN_ING
+                || displayMsg == QPOSService.Display.INPUT_OFFLINE_PIN_ONLY) {
+            dongleListener.onShowMessage(UserInterfaceMessage.ENTER_PIN, true);
+        } else if (displayMsg == QPOSService.Display.INPUT_LAST_OFFLINE_PIN) {
+            dongleListener.onShowMessage(UserInterfaceMessage.LAST_PIN, true);
+        } else if (displayMsg == QPOSService.Display.REMOVE_CARD) {
+            dongleListener.onShowMessage(UserInterfaceMessage.REMOVE_CARD, false);
+        } else if (displayMsg == QPOSService.Display.TRANSACTION_TERMINATED) {
+            dongleListener.onShowMessage(UserInterfaceMessage.TRX_ABORTED, false);
+        }
     }
 
     @Override
@@ -901,6 +1133,21 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onReturnPowerOnFelicaResult(String re, Hashtable<String, String> powerOnFelicaResult) {
+        logFlow("onReturnPowerOnFelicaResult() called with: re = [" + re + "], powerOnFelicaResult = [" + powerOnFelicaResult + "]");
+    }
+
+    @Override
+    public void onReturnPowerOffFelicaResult(String re) {
+        logFlow("onReturnPowerOffFelicaResult() called with: re = [" + re + "]");
+    }
+
+    @Override
+    public void onReturnSendApduFelicaResult(final String re, final String responseLen, final String responseData) {
+        logFlow("onReturnSendApduFelicaResult() called with: re = [" + re + "], responseLen = [" + responseLen + "], responseData = [" + responseData + "]");
+    }
+
+    @Override
     public void onReturnSetSleepTimeResult(final boolean isSuccess) {
         logFlow("onReturnSetSleepTimeResult() called with: isSuccess = [" + isSuccess + "]");
     }
@@ -935,6 +1182,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onReturnCustomConfigResult() called with: isSuccess = [" + isSuccess + "], result = [" + result + "]");
         onReturnCustomConfigConsumer.accept(isSuccess);
         onReturnCustomConfigConsumer = null;
+    }
+
+    @Override
+    public void onReturnDoInputCustomStr(final boolean isSuccess, final String result, final String initiator) {
+        logFlow("onReturnDoInputCustomStr() called with: isSuccess = [" + isSuccess + "], result = [" + result + "], initiator = [" + initiator + "]");
     }
 
     @Override
@@ -973,7 +1225,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         if (isUpdatingAid) {
             updateEmvAid();
         } else {
-            dongleListener.onEmvAidConfigUpdateResult(isSuccess);
+            onAidConfigOverrideConsumer.accept(isSuccess);
         }
     }
 
@@ -1043,16 +1295,26 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onUpdatePosFirmwareResult(QPOSService.UpdateInformationResult result) {
+    public void onUpdatePosFirmwareResult(final QPOSService.UpdateInformationResult result) {
         logFlow("onUpdatePosFirmwareResult() called with: result = [" + result + "]");
-        updateThread.setContinueFlag(false);
-//        isUpdatingFirmware = false;
+        updateThread.continueFlag = false;
 
-        if (result != QPOSService.UpdateInformationResult.UPDATE_SUCCESS) {
-            firmwareUpdate.onPosFirmwareUpdateResult(false, result.name());
-        } else {
-            firmwareUpdate.onPosFirmwareUpdateResult(true, null);
-        }
+        updateThread.handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                isUpdatingFirmware = false;
+
+                if (result == QPOSService.UpdateInformationResult.UPDATE_SUCCESS) {
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_COMPLETED, true);
+                } else if (result == QPOSService.UpdateInformationResult.UPDATE_FAIL) {
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_UNCOMPLETED, true);
+                } else if (result == QPOSService.UpdateInformationResult.UPDATE_PACKET_VEFIRY_ERROR) {
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.FILE_INCOMPATIBLE, true);
+                } else {
+                    firmwareUpdate.onPosFirmwareUpdateResult(FirmwareStatus.UPDATE_FAILED, true);
+                }
+            }
+        }, 500);
     }
 
     @Override
@@ -1106,6 +1368,11 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onReturnMPUCardInfo(Hashtable<String, String> hashtable) {
+        logFlow("onReturnMPUCardInfo() called with: hashtable = [" + hashtable + "]");
+    }
+
+    @Override
     public void onReturnPowerOnNFCResult(final boolean result, final String ksn, final String atr, final int atrLen) {
         logFlow("onReturnPowerOnNFCResult() called with: result = [" + result + "], ksn = [" + ksn + "], atr = [" + atr + "], atrLen = [" + atrLen + "]");
     }
@@ -1126,8 +1393,18 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
+    public void onReadGasCardResult(boolean b, String result) {
+        logFlow("onReadGasCardResult() called with: b = [" + b + "], result = [" + result + "]");
+    }
+
+    @Override
     public void onWriteBusinessCardResult(boolean b) {
         logFlow("onWriteBusinessCardResult() called with: b = [" + b + "]");
+    }
+
+    @Override
+    public void onWriteGasCardResult(boolean b) {
+        logFlow("onWriteGasCardResult() called with: b = [" + b + "]");
     }
 
     @Override
@@ -1156,8 +1433,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onEncryptData(final String b) {
-        logFlow("onEncryptData() called with: b = [" + b + "]");
+    public void onEncryptData(Hashtable<String, String> resultTable) {
+        logFlow("onEncryptData() called with: resultTable = [" + resultTable + "]");
     }
 
     @Override
@@ -1216,8 +1493,8 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
     }
 
     @Override
-    public void onSetPosBlePinCode(boolean b) {
-        logFlow("onSetPosBlePinCode() called with: b = [" + b + "]");
+    public void onSetPosBluConfig(boolean b) {
+        logFlow("onSetPosBluConfig() called with: b = [" + b + "]");
     }
 
     @Override
@@ -1266,19 +1543,39 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         logFlow("onRequestNFCBatchData() called with: transactionResult = [" + transactionResult + "], tlv = [" + tlv + "]");
     }
 
-    private String setDecimalesAmount(final String monto) {
-        String amount = monto;
+    @Override
+    public void onReturnupdateKeyByTR_31Result(boolean result) {
+        logFlow("onReturnupdateKeyByTR_31Result() called with: result = [" + result + "]");
+    }
+
+    @Override
+    public void onRequestGenerateTransportKey(Hashtable result) {
+        logFlow("onRequestGenerateTransportKey() called with: result = [" + result + "]");
+    }
+
+    @Override
+    public void onReturnAnalyseDigEnvelop(String result) {
+        logFlow("onReturnAnalyseDigEnvelop() called with: result = [" + result + "]");
+    }
+
+    private String setDecimalesAmount(@Nullable final BigDecimal monto) {
+//        String amount = monto;
         //TODO Seleccionar el monto del pais - difiere del que existen el la BD ?
-        if (transactionAmountData.getDecimales() == 0 && !"".equals(monto)) {
-            amount = amount.concat("00");
+//        if (transactionAmountData.getDecimales() == 0 && !"".equals(monto)) {
+//            amount = amount.concat("00");
+//        }
+
+        final String amount;
+        if (monto == null) {
+            amount = "";
+        } else {
+            final BigDecimal nPow = BigDecimal.valueOf(Math.pow(10, qposParameters.getExponent()));
+            amount = monto.multiply(nPow)
+                    .setScale(0, RoundingMode.HALF_UP)
+                    .toPlainString();
         }
 
-//        final BigDecimal bigDecimal = new BigDecimal(monto);
-//        final String amount = bigDecimal
-//                .setScale(0, RoundingMode.HALF_UP)
-//                .toPlainString();
-
-        logFlow("setDecimalesAmount() returned: " + amount);
+        logFlow("setDecimalesAmount() returned: amount = [" + monto + "] => [" + amount + ']');
         return amount;
     }
 
@@ -1294,6 +1591,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.APPLICATION_IDENTIFIER,
                 EmvTags.APPLICATION_DEDICATED_FILE_NAME,
                 EmvTags.APPLICATION_PREFERRED_NAME,
+                EmvTags.APPLICATION_LABEL,
                 EmvTags.APPLICATION_PRIORITY_INDICATOR,
                 EmvTags.TRACK2_EQUIVALENT_DATA,
                 EmvTags.APPLICATION_INTERCHANGE_PROFILE,
@@ -1303,6 +1601,7 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.CARD_APPLICATION_VERSION,
                 EmvTags.CARDHOLDER_VERIFICATION_METHOD_LIST,
                 EmvTags.CARDHOLDER_VERIFICATION_RESULTS,
+                EmvTags.CARDHOLDER_MOBILE_VERIFICATION_RESULTS,
                 EmvTags.ISSUER_APPLICATION_DATA,
                 EmvTags.ISSUER_ACTION_CODE_DEFAULT,
                 EmvTags.ISSUER_ACTION_CODE_DENIAL,
@@ -1313,9 +1612,13 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                 EmvTags.TERMINAL_CAPABILITIES,
                 EmvTags.MERCHANT_NAME_AND_LOCATION,
                 EmvTags.AMOUNT_AUTHORIZED,
+                EmvTags.AMOUNT_OTHER,
                 EmvTags.TRANSACTION_CURRENCY_CODE,
                 EmvTags.TRANSACTION_CURRENCY_EXPONENT,
-                EmvTags.TERMINAL_TRANSACTION_QUALIFIERS
+                EmvTags.TERMINAL_TRANSACTION_QUALIFIERS,
+                EmvTags.KERNEL_4_READER_CAPABILITIES,
+                EmvTags.DEVICE_INFORMATION,
+                EmvTags.POS_ENTRY_MODE
         );
 
         Map<String, String> tags = mPosService.getICCTag(QPOSService.EncryptType.PLAINTEXT,
@@ -1330,15 +1633,32 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
         return tags;
     }
 
-    private void logFlow(String whatToLog) {
+    private void logFlow(String entireToLog) {
         if (isLogEnabled) {
-            Log.d(TAG, whatToLog);
+            int MAX_BUFFER_LENGTH = 3200;
+
+            if (entireToLog.length() > MAX_BUFFER_LENGTH) {
+                int endIndex, beginIndex = 0;
+
+                do {
+                    endIndex = beginIndex + MAX_BUFFER_LENGTH;
+
+                    String what = endIndex > entireToLog.length()
+                            ? entireToLog.substring(beginIndex)
+                            : entireToLog.substring(beginIndex, endIndex);
+
+                    Log.d(TAG, what);
+                    beginIndex = endIndex;
+                } while (entireToLog.length() > beginIndex);
+            } else {
+                Log.d(TAG, entireToLog);
+            }
         }
     }
 
     private class UpdateThread extends Thread {
         private boolean continueFlag = true;
-        private Handler handler;
+        private final Handler handler;
 
         private UpdateThread(@NonNull Context context) {
             handler = new Handler(context.getMainLooper()) {
@@ -1373,12 +1693,6 @@ public class QPosManager<T extends DspreadDevicePOS> extends AbstractDongle impl
                     }
                 }
             } while (continueFlag);
-            handler = null;
-        }
-
-        public void setContinueFlag(boolean continueFlag) {
-            this.continueFlag = continueFlag;
-            isUpdatingFirmware = continueFlag;
         }
     }
 }

@@ -2,8 +2,6 @@ package com.pagatodo.qposlib;
 
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
-
 import static com.pagatodo.qposlib.Logger.Loggers.LOGGER_PRODUCCION;
 import static com.pagatodo.qposlib.Logger.Loggers.LOGGER_QA;
 
@@ -38,7 +36,7 @@ public class Logger {
             @Override
             public void throwing(String tag, int numError, Throwable thrwbl ,String mensaje) {
 //                Utilities.appendDeviceInfo();
-                Crashlytics.logException(thrwbl);
+//                Crashlytics.logException(thrwbl);
                 Log.e(tag + " " +numError, mensaje, thrwbl);
             }
 
@@ -57,7 +55,7 @@ public class Logger {
             @Override
             public void throwing(String tag, int numError, Throwable thrwbl,String mensaje) {
 //                Utilities.appendDeviceInfo();
-                Crashlytics.logException(thrwbl);
+//                Crashlytics.logException(thrwbl);
 
             }
 

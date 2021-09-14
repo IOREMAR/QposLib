@@ -17,19 +17,21 @@ public interface PosInterface {
 
     void openCommunication();
 
+    void reopenCommunication();
+
     void closeCommunication();
 
     void resetQPOS();
-
-    String getPosInfo();
 
     void getPin(int maxLen, final String maskedPAN);
 
     void getSessionKeys(final String clavePublicaFile, final Context context);
 
-    void setEmvAidUpdate(ArrayList<String> aidConfigList);
+    void setEmvAidUpdate(ArrayList<String> aidConfigList, Consumer<Boolean> onEmvAidConfigUpdateConsumer);
 
-    void setAidTlvUpdate(@NonNull String[] aidTlvList);
+    void setAidTlvUpdate(@NonNull String[] aidTlvList, Consumer<Boolean> onAidTlvUpdateConsumer);
+
+    void updateDefaultDRL(Consumer<Boolean> onAidTlvUpdateConsumer);
 
     void doTransaccion(TransactionAmountData transactionAmountData, QposParameters qposParameters);
 
@@ -47,11 +49,16 @@ public interface PosInterface {
 
     Hashtable<String, String> getQposIdHash();
 
+    @Deprecated
     void setReaderEmvConfig(String emvCfgAppHex, String emvCfgCapkHex, Consumer<Boolean> onReturnCustomConfigConsumer);
+
+    void setReaderEmvConfig(String emvXml, Consumer<Boolean> onReturnCustomConfigConsumer);
 
     int updateFirmware(@NonNull Context context, final byte[] dataToUpdate, final String file);
 
     QPOSDeviceInfo getDevicePosInfo();
+
+    void showOnDisplay(@NonNull String message, int seconds);
 
     /**
      * Tipo de Dispositivo
